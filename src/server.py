@@ -30,3 +30,4 @@ while True:
 
 # Fecha o socket do servidor
 # server_socket.close()
+# lsof -i :9090 // caso não seja possivel ligar o servidor mata quem estiver a usar a porta
