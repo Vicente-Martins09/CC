@@ -39,9 +39,6 @@ while True:
     # Recebe dados do cliente
     guarda_Localizacao(node_socket)
 
-    # Imprime a mensagem recebida
-    # print(f"Cliente diz: {data.decode()}")
-
     # Fecha a conexão com o cliente
     node_socket.close()
     

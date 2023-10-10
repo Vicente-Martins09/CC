@@ -40,8 +40,6 @@ while True:
         print("\tcomandos: Lista os ccomandos existentes.")
     
     data = node_socket.recv(1024).decode('utf-8')
-        
-
 
 # Fecha a conexão com o servidor
 node_socket.close()
