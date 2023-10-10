@@ -17,13 +17,13 @@ nomesFicheiros = os.listdir(sys.argv[3])
 message = ' | '.join(nomesFicheiros)
 
 # Cria um socket do tipo TCP
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+node_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Conecta-se ao servidor
-client_socket.connect((host, port))
+node_socket.connect((host, port))
 
 # Envia a mensagem para o servidor
-client_socket.send(message.encode())
+node_socket.send(message.encode())
 
 # Deixar o Node ativo enquanto não for desligado
 
@@ -39,9 +39,9 @@ while True:
         print("\tquit: Desligar a ligação ao servidor.")
         print("\tcomandos: Lista os ccomandos existentes.")
     
-    data = client_socket.recv(1024).decode('utf-8')
+    data = node_socket.recv(1024).decode('utf-8')
         
 
 
 # Fecha a conexão com o servidor
-client_socket.close()
+node_socket.close()
