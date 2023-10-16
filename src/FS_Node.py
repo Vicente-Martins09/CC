@@ -14,7 +14,7 @@ port = int(sys.argv[2])  # Porta que o servidor está ouvindo
 # Recolhe uma lista de ficheiros dentro de uma pasta
 
 nomesFicheiros = os.listdir(sys.argv[3])
-message = ' | '.join(nomesFicheiros)
+message = ' | '.join(nomesFicheiros)  # meter o n de ficheiros aqui
 
 # Cria um socket do tipo TCP
 node_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

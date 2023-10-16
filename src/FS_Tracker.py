@@ -4,7 +4,7 @@ import socket
 ficheiroDoNodo = {}
 
 # Configuração do servidor
-host = '127.0.0.1'  # Endereço IP do servidor
+host = '127.0.0.2'  # Endereço IP do servidor
 port = 9090       # Porta que o servidor irá ouvir
 
 # Cria um socket do tipo TCP
@@ -16,6 +16,8 @@ tracker_socket.bind((host, port))
 # Começa a ouvir por conexões
 tracker_socket.listen()
 
+x = 0
+
 print(f"Servidor escutando em {host}: porta {port}")
 
 def guarda_Localizacao(node_socket):
@@ -26,7 +28,13 @@ def guarda_Localizacao(node_socket):
     nodeIP = node_socket.getpeername()[0]
     
     for ficheiro in nomeFicheiros:
-        ficheiroDoNodo[ficheiro] = nodeIP
+        if ficheiro in ficheiroDoNodo:
+            # If the file is already in the dictionary, append the new node to the list
+            # ficheiroDoNodo[ficheiro].append(nodeIP)
+            ficheiroDoNodo[ficheiro].append(x)
+        else:
+            # ficheiroDoNodo[ficheiro] = [nodeIP]
+            ficheiroDoNodo[ficheiro] = [x]
         
     print("Ficcheiros em cada Node: \n")
     for nomeFicheiro, node in ficheiroDoNodo.items():
@@ -36,6 +44,8 @@ while True:
     # Aceita uma conexão de um cliente
     node_socket, node_address = tracker_socket.accept()
 
+    x = x+1
+    
     # Recebe dados do cliente
     guarda_Localizacao(node_socket)
 
