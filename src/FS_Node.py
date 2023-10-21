@@ -32,6 +32,7 @@ while True:
     user_input = input("Selecione um comando: ")
     
     if user_input.strip().lower() == "quit":
+        node_socket.send("delete".encode())
         print("Desligada a conexão ao servidor")
         break
     
