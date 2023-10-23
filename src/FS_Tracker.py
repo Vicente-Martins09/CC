@@ -63,7 +63,7 @@ def handle_node(node_socket):
             key = format[0]
             continue
         
-        if key == "delete":
+        if key == "quit":
             print("Node desconectado")
             # nodeIP = node_socket.getpeername()[0]
             remover_info_node(node_ip)
