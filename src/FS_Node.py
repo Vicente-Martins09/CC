@@ -14,7 +14,7 @@ port = int(sys.argv[2])  # Porta que o servidor está ouvindo
 # Recolhe uma lista de ficheiros dentro de uma pasta
 
 nomesFicheiros = os.listdir(sys.argv[3])
-message = ' | '.join(nomesFicheiros)  # meter o n de ficheiros aqui
+message = f"files . {' | '.join(nomesFicheiros)}"  # meter o n de ficheiros aqui
 
 # Cria um socket do tipo TCP
 node_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -32,7 +32,7 @@ while True:
     user_input = input("Selecione um comando: ")
     
     if user_input.strip().lower() == "quit":
-        node_socket.send("delete".encode())
+        node_socket.send("quit . ".encode())
         print("Desligada a conexão ao servidor")
         break
     

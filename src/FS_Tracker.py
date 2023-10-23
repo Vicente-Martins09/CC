@@ -54,15 +54,22 @@ def remover_info_node(nodeIP):
     
 def handle_node(node_socket):
     while True:    
-        data = node_socket.recv(1024).decode()
+        message = node_socket.recv(1024).decode()
         
-        if data == "delete":
+        format = message.split(" . ")
+        if len(format) == 2:
+            key, data = format[0], format[1]
+        else:
+            key = format[0]
+            continue
+        
+        if key == "delete":
             print("Node desconectado")
             # nodeIP = node_socket.getpeername()[0]
             remover_info_node(node_ip)
             node_socket.close()
             break
-        else:
+        elif key == "files":
             guarda_Localizacao(data)
         
 while True:
