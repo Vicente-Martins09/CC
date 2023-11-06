@@ -25,9 +25,9 @@ print(f"Servidor escutando em {host}: porta {port}")
 def print_listaFiles():
     print("Ficheiros em cada Node: \n")
     for nomeFicheiro, node in ficheiroDoNodo.items():
-        print(f"{nomeFicheiro} pertence ao node com porta udp {node}")
+        print(f"{nomeFicheiro} pertence aos nodes com IP {node}")
 
-def guarda_Localizacao(data, portaUDP):
+def guarda_Localizacao(data):
         
     nomeFicheiros = data.split(' | ')
         
@@ -35,19 +35,19 @@ def guarda_Localizacao(data, portaUDP):
         
     for ficheiro in nomeFicheiros:
         if ficheiro in ficheiroDoNodo:
-                # ficheiroDoNodo[ficheiro].append((nodeIP, portaUDP))
-                ficheiroDoNodo[ficheiro].append((x, portaUDP))
+                # ficheiroDoNodo[ficheiro].append(nodeIP)
+                ficheiroDoNodo[ficheiro].append(x)
         else:
             # If the file doesn't exist, create a new entry for it with the node and UDP port
-            # ficheiroDoNodo[ficheiro] = [(nodeIP, portaUDP)]
-            ficheiroDoNodo[ficheiro] = [(x, portaUDP)]
+            # ficheiroDoNodo[ficheiro] = [nodeIP]
+            ficheiroDoNodo[ficheiro] = [x]
             
     print_listaFiles()
             
 def remover_info_node(nodeIP):
     for ficheiro, nodes in ficheiroDoNodo.items():
         for node in nodes:   
-            if nodeIP == node[0]:
+            if nodeIP == node:
                 nodes.remove(node)
         
     print(f"Informação do {nodeIP} removida")
@@ -57,12 +57,14 @@ def procurar_file(nomeFile):
     for ficheiro, nodes in ficheiroDoNodo.items():
         if ficheiro == nomeFile:
             if len(nodes) > 0:
-                print(nodes[0][1])
-                return nodes[0][1]
+                print_listaFiles()
+                return nodes[0]
             else:
+                print_listaFiles()
                 return None
 
 def handle_node(node_socket):
+    node_ip = x
     while True:    
         message = node_socket.recv(1024).decode()
         
@@ -77,9 +79,9 @@ def handle_node(node_socket):
             break
             
         elif key == "files":
-            if len(format) == 3:
-                portaUDP, data = format[1], format[2]
-                guarda_Localizacao(data, portaUDP)
+            if len(format) == 2:
+                data = format[1]
+                guarda_Localizacao(data)
             else:
                 print("Ocorreu um erro a enviar os ficheiros.")
                 
@@ -91,7 +93,7 @@ def handle_node(node_socket):
                 
                  # Assuming the client is expecting a string response
                 if localizacao is not None:
-                    response = f"Porta UDP onde se encontra é {localizacao}"
+                    response = f"IP onde se encontra o ficheiro é {localizacao}"
                 else:
                     response = "File not found"
 
@@ -109,7 +111,6 @@ while True:
     
     node_thread = threading.Thread(target = handle_node, args = (node_socket,))
     node_thread.start()
-    
     
     node_ip = x
     # node_ip = node_socket.getpeername()[0]

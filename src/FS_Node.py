@@ -23,8 +23,7 @@ node_socket.connect((host, port))
 # Recolhe a porta UDP de um node
 # Cria a mensagem que é enviada assim que o node conecta ao tracker
 nomesFicheiros = os.listdir(sys.argv[3])
-portaUDP = node_socket.getsockname()[1]
-message = f"files . {portaUDP} . {' | '.join(nomesFicheiros)}" # meter o n de ficheiros aqui?
+message = f"files . {' | '.join(nomesFicheiros)}" # meter o n de ficheiros aqui?
 
 # Envia a mensagem para o servidor
 node_socket.send(message.encode())
