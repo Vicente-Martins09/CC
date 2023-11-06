@@ -27,20 +27,15 @@ def print_listaFiles():
     for nomeFicheiro, node in ficheiroDoNodo.items():
         print(f"{nomeFicheiro} pertence aos nodes com IP {node}")
 
-def guarda_Localizacao(data):
+def guarda_Localizacao(data, nodeIP):
         
     nomeFicheiros = data.split(' | ')
         
-    nodeIP = node_socket.getpeername()[0]
-        
     for ficheiro in nomeFicheiros:
         if ficheiro in ficheiroDoNodo:
-                # ficheiroDoNodo[ficheiro].append(nodeIP)
-                ficheiroDoNodo[ficheiro].append(x)
+                ficheiroDoNodo[ficheiro].append(nodeIP)
         else:
-            # If the file doesn't exist, create a new entry for it with the node and UDP port
-            # ficheiroDoNodo[ficheiro] = [nodeIP]
-            ficheiroDoNodo[ficheiro] = [x]
+            ficheiroDoNodo[ficheiro] = [nodeIP]
             
     print_listaFiles()
             
@@ -64,7 +59,8 @@ def procurar_file(nomeFile):
                 return None
 
 def handle_node(node_socket):
-    node_ip = x
+    # nodeIP = node_socket.getpeername()[0]
+    nodeIP = x
     while True:    
         message = node_socket.recv(1024).decode()
         
@@ -73,15 +69,14 @@ def handle_node(node_socket):
         
         if key == "quit":
             print("Node desconectado")
-            # nodeIP = node_socket.getpeername()[0]
-            remover_info_node(node_ip)
+            remover_info_node(nodeIP)
             node_socket.close()
             break
             
         elif key == "files":
             if len(format) == 2:
                 data = format[1]
-                guarda_Localizacao(data)
+                guarda_Localizacao(data, nodeIP)
             else:
                 print("Ocorreu um erro a enviar os ficheiros.")
                 
@@ -89,15 +84,12 @@ def handle_node(node_socket):
             if len(format) == 2:
                 nomeFile = format[1]
                 localizacao = procurar_file(nomeFile)
-                print(localizacao)
                 
-                 # Assuming the client is expecting a string response
                 if localizacao is not None:
                     response = f"IP onde se encontra o ficheiro é {localizacao}"
                 else:
                     response = "File not found"
 
-                # Sending the response back to the client
                 node_socket.send(response.encode())
             else:
                 print("Ocorreu um erro a pedir o file")
@@ -112,9 +104,9 @@ while True:
     node_thread = threading.Thread(target = handle_node, args = (node_socket,))
     node_thread.start()
     
-    node_ip = x
-    # node_ip = node_socket.getpeername()[0]
-    node_threads[node_ip] = node_thread
+    nodeIP = x
+    # nodeIP = node_socket.getpeername()[0]
+    node_threads[nodeIP] = node_thread
     
 # Fecha o socket do servidor
 tracker_socket.close()
