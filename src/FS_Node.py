@@ -20,7 +20,6 @@ node_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 node_socket.connect((host, port))
 
 # Cria uma lista com o nome dos ficheiros dentro de uma pasta
-# Recolhe a porta UDP de um node
 # Cria a mensagem que é enviada assim que o node conecta ao tracker
 nomesFicheiros = os.listdir(sys.argv[3])
 message = f"files . {' | '.join(nomesFicheiros)}" # meter o n de ficheiros aqui?
