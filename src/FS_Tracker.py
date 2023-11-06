@@ -53,7 +53,7 @@ def procurar_file(nomeFile):
         if ficheiro == nomeFile:
             if len(nodes) > 0:
                 print_listaFiles()
-                return nodes[0]
+                return nodes
             else:
                 print_listaFiles()
                 return None
@@ -86,7 +86,7 @@ def handle_node(node_socket):
                 localizacao = procurar_file(nomeFile)
                 
                 if localizacao is not None:
-                    response = f"IP onde se encontra o ficheiro é {localizacao}"
+                    response = f"IP's onde se encontram o ficheiro são {localizacao}"
                 else:
                     response = "File not found"
 
