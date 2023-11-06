@@ -10,13 +10,13 @@ host = '127.0.0.2'  # Endereço IP do servidor
 port = 9090       # Porta que o servidor irá ouvir
 
 # Cria um socket do tipo TCP
-tracker_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+socketTCP = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Vincula o socket ao endereço e à porta
-tracker_socket.bind((host, port))
+socketTCP.bind((host, port))
 
 # Começa a ouvir por conexões
-tracker_socket.listen()
+socketTCP.listen()
 
 x = 0
 
@@ -24,36 +24,37 @@ print(f"Servidor escutando em {host}: porta {port}")
 
 def print_listaFiles():
     print("Ficheiros em cada Node: \n")
-    for nomeFicheiro, node in ficheiroDoNodo.items():
-        print(f"{nomeFicheiro} pertence aos nodes com IP {node}")
+    for nomeFicheiro, node_info in ficheiroDoNodo.items():
+        print(f"{nomeFicheiro} com {node_info[0]} blocos pertence aos nodes com IP {node_info[1]}")
 
 def guarda_Localizacao(data, nodeIP):
         
-    nomeFicheiros = data.split(' | ')
+    infoFicheiros = data.split(' | ')
         
-    for ficheiro in nomeFicheiros:
+    for infoFicheiro in infoFicheiros:
+        ficheiro, numBlocks = infoFicheiro.split("-")
         if ficheiro in ficheiroDoNodo:
-                ficheiroDoNodo[ficheiro].append(nodeIP)
+                ficheiroDoNodo[ficheiro][1].append(nodeIP)
         else:
-            ficheiroDoNodo[ficheiro] = [nodeIP]
+            ficheiroDoNodo[ficheiro] = [numBlocks, [nodeIP]]
             
     print_listaFiles()
             
 def remover_info_node(nodeIP):
-    for ficheiro, nodes in ficheiroDoNodo.items():
-        for node in nodes:   
+    for ficheiro, node_info in ficheiroDoNodo.items():
+        for node in node_info[1]: 
             if nodeIP == node:
-                nodes.remove(node)
+                node_info[1].remove(node)
         
     print(f"Informação do {nodeIP} removida")
     print_listaFiles()
     
 def procurar_file(nomeFile):
-    for ficheiro, nodes in ficheiroDoNodo.items():
+    for ficheiro, node_info in ficheiroDoNodo.items():
         if ficheiro == nomeFile:
-            if len(nodes) > 0:
+            if len(node_info) > 0:
                 print_listaFiles()
-                return nodes
+                return node_info
             else:
                 print_listaFiles()
                 return None
@@ -97,7 +98,7 @@ def handle_node(node_socket):
         
 while True:
     # Aceita uma conexão de um cliente
-    node_socket, node_address = tracker_socket.accept()
+    node_socket, node_address = socketTCP.accept()
 
     x = x+1
     
@@ -109,7 +110,7 @@ while True:
     node_threads[nodeIP] = node_thread
     
 # Fecha o socket do servidor
-tracker_socket.close()
+socketTCP.close()
     
 
 # lsof -i :9090 // caso não seja possivel ligar o servidor mata quem estiver a usar a porta
