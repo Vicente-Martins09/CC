@@ -52,7 +52,7 @@ def remover_info_node(nodeIP):
 def procurar_file(nomeFile):
     for ficheiro, node_info in ficheiroDoNodo.items():
         if ficheiro == nomeFile:
-            if len(node_info) > 0:
+            if len(node_info[1]) > 0:
                 print_listaFiles()
                 return node_info
             else:
@@ -60,7 +60,6 @@ def procurar_file(nomeFile):
                 return None
 
 def handle_node(node_socket):
-    # nodeIP = node_socket.getpeername()[0]
     nodeIP = x
     while True:    
         message = node_socket.recv(1024).decode()
@@ -75,8 +74,11 @@ def handle_node(node_socket):
             break
             
         elif key == "files":
-            if len(format) == 2:
-                data = format[1]
+            if len(format) == 3:
+                # nodeIP = format[1]
+                nodeIp = format[1]
+                print(nodeIp)
+                data = format[2]
                 guarda_Localizacao(data, nodeIP)
             else:
                 print("Ocorreu um erro a enviar os ficheiros.")
