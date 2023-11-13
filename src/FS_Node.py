@@ -1,4 +1,5 @@
 import threading
+import select
 import socket
 import sys
 import os
@@ -8,7 +9,11 @@ ID_SIZE = 4
 TamanhoBloco = MTU - ID_SIZE
 ipNode = socket.gethostbyname(socket.gethostname())
 
-exit_event = threading.Event()
+udpAtivo = True
+
+def set_udp_false():
+    global udpAtivo
+    udpAtivo = False
 
 print(ipNode)
 
@@ -99,7 +104,8 @@ def tracker_protocol(udp_thread):
         if comando[0] == "quit":
             socketTCP.send("quit . ".encode())
             print("Desligada a conexão ao servidor")
-            exit_event.set()
+            set_udp_false()
+            print("Tracker", udpAtivo)
             break
         
         elif comando[0] == "get":
@@ -150,11 +156,15 @@ def transfer_protocol():
     socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     socketUDP.bind(('127.0.1.1', 9090)) 
     
-    while not exit_event.is_set():
-        data, addr = socketUDP.recvfrom(1024)
-        fileName = data.decode()
+    print("Transfer", udpAtivo)
+    
+    while udpAtivo:
+        ready, _, _ = select.select([socketUDP], [], [], 1.0)
+        if ready:
+            data, addr = socketUDP.recvfrom(1024)
+            fileName = data.decode()
         
-        env_File(fileName, socketUDP, addr)
+            env_File(fileName, socketUDP, addr)
         
    
 udp_thread = threading.Thread(target = transfer_protocol)
