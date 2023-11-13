@@ -45,45 +45,47 @@ def calcula_blocos_por_ficheiro(caminho_pasta):
     return ficheiros_comBlocos
         
 # Cria uma lista com o nome dos ficheiros e o número de blocos ocupados dentro de uma pasta
-caminho_pasta = sys.argv[3]
+caminho_pasta = sys.argv[3] 
 ficheiros_comBlocos = calcula_blocos_por_ficheiro(caminho_pasta)
 
 # print(ficheiros_comBlocos)
 
 def transf_file(fileInfo, fileName):
+    print(fileInfo[0])  # isto é I e não devia
     nodeIP = fileInfo[1]
     numBlocos = fileInfo[0]
+    print("teste", numBlocos)
+    numBlocos = int(numBlocos)
+    print(numBlocos)
     
     socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    # socketUDP.connect((nodeIP, port))
-    socketUDP.connect('127.0.1.1', port)
     
-    socketUDP.send(fileName.encode())
+    i = 1
+    while numBlocos >= i:
+        pedeBloco = f"{fileName}|{i}|{ipNode}"
+        # socketUDP.sendto(pedeBloco.encode(), ('127.0.1.1', port))  ip do um node na lista de nodes
+        socketUDP.sendto(pedeBloco.encode(), ('127.0.1.1', port))
     
-    ficheiroRecebido = b''
-    while True:
+    
         data, addr = socketUDP.recvfrom(MTU)
-        
         if not data:
+            print("Erro a receber")
             break
         
-        num_Bloco = int.from_bytes(data[:4], byteorder= 'big')
-        blocosRec += num_Bloco
+        
+        num_Bloco = int.from_bytes(data[:4], byteorder='big')
         conteudoFile = data[4:]
         
-        ficheiroRecebido += conteudoFile
+        with open(os.path.join(caminho_pasta, fileName), "ab") as file:
+            file.write(conteudoFile)
         
-        if len(ficheiroRecebido) >= numBlocos * TamanhoBloco:
-            break
+        
+        i += 1
     
     socketUDP.close()
     
-    caminho_newFile = os.path.join(caminho_pasta, fileName)
-    
-    with open(caminho_newFile, "wb") as file:
-        file.write(ficheiroRecebido)
         
-def tracker_protocol(udp_thread):
+def tracker_protocol():
     # Cria um socket do tipo TCP
     socketTCP = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -112,7 +114,7 @@ def tracker_protocol(udp_thread):
             nomeFicheiro = comando[1]  # Obtém o nome do arquivo
             mensagemGet = f"get . {nomeFicheiro}"
             socketTCP.send(mensagemGet.encode())
-            fileInfo = socketTCP.recv(1024).decode()
+            fileInfo = socketTCP.recv(1024).decode() # (nºblocos, ips)
             transf_file(fileInfo, nomeFicheiro)
             print(fileInfo)
         
@@ -123,53 +125,44 @@ def tracker_protocol(udp_thread):
         
     socketTCP.close()
 
-def env_File(fileName, socketUDP, addr):
-    
-    for file in ficheiros_comBlocos:
-        if fileName == file[0]:
-            num_blocks = file[1]
-         
+def env_File(fileName, numBloco, socketUDP):     
     caminhoFile = os.path.join(caminho_pasta, fileName)
        
     with open(caminhoFile, "rb") as file:
         while True:
-            data = file.read(TamanhoBloco)
+            posInic = TamanhoBloco * (numBloco-1)
+            file.seek(posInic)
 
+            data = file.read(TamanhoBloco)
             if not data:
                 break  
-
-            block_number_bytes = num_blocks.to_bytes(4, 'big')
-
-            data_to_send = block_number_bytes + data
-
-            socketUDP.send(data_to_send, (addr,))
-
-            num_blocks -= 1 
             
-            if num_blocks == 0:
-                break
+            numBloco_bytes = numBloco.to_bytes(4, 'big')
 
-    socketUDP.send(b"")
-    socketUDP.close()
+            dataEnviar = numBloco_bytes + data
+
+            socketUDP.send(dataEnviar)
+
      
 def transfer_protocol():
     socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     socketUDP.bind(('127.0.1.1', 9090)) 
     
-    print("Transfer", udpAtivo)
-    
     while udpAtivo:
         ready, _, _ = select.select([socketUDP], [], [], 1.0)
+        
         if ready:
             data, addr = socketUDP.recvfrom(1024)
-            fileName = data.decode()
+            infoFile = data.decode()
         
-            env_File(fileName, socketUDP, addr)
+            fileName, numBloco, ipRetorno = infoFile.split("|")
+            socketUDP.connect(ipRetorno, 9090)
+            env_File(fileName, numBloco, socketUDP)
         
    
 udp_thread = threading.Thread(target = transfer_protocol)
 udp_thread.start()
-tracker_thread = threading.Thread(target = tracker_protocol, args= (udp_thread,))
+tracker_thread = threading.Thread(target = tracker_protocol)
 tracker_thread.start()
 
 udp_thread.join()
