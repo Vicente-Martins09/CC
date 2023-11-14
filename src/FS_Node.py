@@ -2,6 +2,7 @@ import threading
 import select
 import socket
 import sys
+import ast
 import os
 
 MTU = 1200
@@ -51,12 +52,9 @@ ficheiros_comBlocos = calcula_blocos_por_ficheiro(caminho_pasta)
 # print(ficheiros_comBlocos)
 
 def transf_file(fileInfo, fileName):
-    print(fileInfo[0])  # isto é I e não devia
-    nodeIP = fileInfo[1]
-    numBlocos = fileInfo[0]
-    print("teste", numBlocos)
-    numBlocos = int(numBlocos)
-    print(numBlocos)
+    nodeIPs = fileInfo[1]
+    numBlocos = int(fileInfo[0])
+    # print("teste", numBlocos)
     
     socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     
@@ -72,7 +70,7 @@ def transf_file(fileInfo, fileName):
             print("Erro a receber")
             break
         
-        
+        print(data)
         num_Bloco = int.from_bytes(data[:4], byteorder='big')
         conteudoFile = data[4:]
         
@@ -107,7 +105,6 @@ def tracker_protocol():
             socketTCP.send("quit . ".encode())
             print("Desligada a conexão ao servidor")
             set_udp_false()
-            print("Tracker", udpAtivo)
             break
         
         elif comando[0] == "get":
@@ -115,8 +112,8 @@ def tracker_protocol():
             mensagemGet = f"get . {nomeFicheiro}"
             socketTCP.send(mensagemGet.encode())
             fileInfo = socketTCP.recv(1024).decode() # (nºblocos, ips)
+            fileInfo = ast.literal_eval(fileInfo)
             transf_file(fileInfo, nomeFicheiro)
-            print(fileInfo)
         
         elif comando[0] == "comandos":
             print("\tquit: Desligar a ligação ao servidor.")
@@ -156,8 +153,8 @@ def transfer_protocol():
             infoFile = data.decode()
         
             fileName, numBloco, ipRetorno = infoFile.split("|")
-            socketUDP.connect(ipRetorno, 9090)
-            env_File(fileName, numBloco, socketUDP)
+            socketUDP.connect((ipRetorno, 9090))
+            env_File(fileName, int(numBloco), socketUDP)
         
    
 udp_thread = threading.Thread(target = transfer_protocol)

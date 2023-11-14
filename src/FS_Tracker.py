@@ -89,7 +89,7 @@ def handle_node(node_socket):
                 localizacao = procurar_file(nomeFile)
                 
                 if localizacao is not None:
-                    response = f"IP's onde se encontram o ficheiro são {localizacao}"
+                    response = f"{localizacao}"
                 else:
                     response = "File not found"
 
