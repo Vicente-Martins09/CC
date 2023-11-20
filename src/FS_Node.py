@@ -57,12 +57,17 @@ def transf_file(fileInfo, fileName):
     # print("teste", numBlocos)
     print(nodeIPs)
     
+    file = open(os.path.join(caminho_pasta, fileName), "wb")
+    file_size = numBlocos * TamanhoBloco
+    file.seek(file_size-1)
+    file.write(b"\0")
+    
     socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     
     i = 1
     while numBlocos >= i:
         pedeBloco = f"{fileName}|{i}|{ipNode}"
-        socketUDP.sendto(pedeBloco.encode(), (nodeIPs[0], port))  ip do um node na lista de nodes
+        socketUDP.sendto(pedeBloco.encode(), (nodeIPs[0], port))  # ip do um node na lista de nodes
         # socketUDP.sendto(pedeBloco.encode(), ('127.0.1.1', port))
     
     
@@ -71,16 +76,18 @@ def transf_file(fileInfo, fileName):
             print("Erro a receber")
             break
         
-        print(data)
+        print(data.decode())
         num_Bloco = int.from_bytes(data[:4], byteorder='big')
         conteudoFile = data[4:]
         
-        with open(os.path.join(caminho_pasta, fileName), "ab") as file:
-            file.write(conteudoFile)
+        posInic = TamanhoBloco * (num_Bloco-1)
+        file.seek(posInic)
+        file.write(conteudoFile)
         
         
         i += 1
     
+    file.close()
     socketUDP.close()
     
         

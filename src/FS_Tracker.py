@@ -75,9 +75,9 @@ def handle_node(node_socket):
             
         elif key == "files":
             if len(format) == 3:
-                # nodeIP = format[1]
-                nodeIp = format[1]
-                print(nodeIp)
+                nodeIP = format[1]
+                # nodeIp = format[1]
+                # print(nodeIp)
                 data = format[2]
                 guarda_Localizacao(data, nodeIP)
             else:
