@@ -6,7 +6,7 @@ ficheiroDoNodo = {}
 node_threads = {}
 
 # Configuração do servidor
-host = '127.0.0.2'  # Endereço IP do servidor
+host = '127.0.0.1'  # Endereço IP do servidor
 port = 9090       # Porta que o servidor irá ouvir
 
 # Cria um socket do tipo TCP

@@ -171,12 +171,6 @@ def transfer_protocol():
             fileName, numBloco, ipRetorno = infoFile.split("|")
             env_File(fileName, int(numBloco), socketUDP, addr)
             ready = False
-       
-   
-udp_thread = threading.Thread(target = transfer_protocol)
-udp_thread.start()
+        
 tracker_thread = threading.Thread(target = tracker_protocol)
 tracker_thread.start()
-
-udp_thread.join()
-tracker_thread.join()
