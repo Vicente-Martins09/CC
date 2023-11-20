@@ -55,14 +55,15 @@ def transf_file(fileInfo, fileName):
     nodeIPs = fileInfo[1]
     numBlocos = int(fileInfo[0])
     # print("teste", numBlocos)
+    print(nodeIPs)
     
     socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     
     i = 1
     while numBlocos >= i:
         pedeBloco = f"{fileName}|{i}|{ipNode}"
-        # socketUDP.sendto(pedeBloco.encode(), ('127.0.1.1', port))  ip do um node na lista de nodes
-        socketUDP.sendto(pedeBloco.encode(), ('127.0.1.1', port))
+        socketUDP.sendto(pedeBloco.encode(), (nodeIPs[0], port))  ip do um node na lista de nodes
+        # socketUDP.sendto(pedeBloco.encode(), ('127.0.1.1', port))
     
     
         data, addr = socketUDP.recvfrom(MTU)
@@ -143,7 +144,8 @@ def env_File(fileName, numBloco, socketUDP):
      
 def transfer_protocol():
     socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    socketUDP.bind(('127.0.1.1', 9090)) 
+    # socketUDP.bind(('127.0.1.1', 9090))
+    socketUDP.bind((ipNode, 9090)) 
     
     while udpAtivo:
         ready, _, _ = select.select([socketUDP], [], [], 1.0)

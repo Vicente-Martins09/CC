@@ -60,7 +60,7 @@ def procurar_file(nomeFile):
                 return None
 
 def handle_node(node_socket):
-    nodeIP = x
+    # nodeIP = x
     while True:    
         message = node_socket.recv(1024).decode()
         
