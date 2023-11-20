@@ -8,9 +8,10 @@ import os
 MTU = 1200
 ID_SIZE = 4
 TamanhoBloco = MTU - ID_SIZE
-hostname = socket.gethostname()
-ipNode = socket.gethostbyname(hostname)
-print(hostname)
+# hostname = socket.gethostname()
+# ipNode = socket.gethostbyname(hostname)
+# print(hostname)
+# print(ipNode)
 
 udpAtivo = True
 
@@ -18,7 +19,6 @@ def set_udp_false():
     global udpAtivo
     udpAtivo = False
 
-print(ipNode)
 
 if len(sys.argv) != 4:
     print("Uso: python cliente.py <IP do host> <Número da Porta> <Pasta com os ficheiros>")
@@ -97,7 +97,8 @@ def tracker_protocol():
     socketTCP.connect((host, port))
     
     # Cria a mensagem que é enviada assim que o node conecta ao tracker
-    mensagemFiles = f"files . {ipNode} . " + ' | '.join([f"{file}-{blocks}" for file, blocks in ficheiros_comBlocos])
+    # mensagemFiles = f"files . {ipNode} . " + ' | '.join([f"{file}-{blocks}" for file, blocks in ficheiros_comBlocos])
+    mensagemFiles = f"files . " + ' | '.join([f"{file}-{blocks}" for file, blocks in ficheiros_comBlocos])
     socketTCP.send(mensagemFiles.encode())
     
     print("Escreva 'comandos' em caso de dúvida")
@@ -151,7 +152,6 @@ def env_File(fileName, numBloco, socketUDP, addr):
 
      
 def transfer_protocol():
-    print(ipNode)
     socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     socketUDP.bind(('0.0.0.0', 9090)) 
     
