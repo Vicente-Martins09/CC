@@ -39,6 +39,16 @@ def guarda_Localizacao(data, nodeIP):
             ficheiroDoNodo[ficheiro] = [numBlocks, [nodeIP]]
             
     print_listaFiles()
+ 
+def update_info_file(nomeFile, nodeIP):
+    print("aqui")
+    print(nomeFile)
+    for ficheiro, node_info in ficheiroDoNodo.items():
+        print(ficheiro)
+        if ficheiro == nomeFile:
+            ficheiroDoNodo[ficheiro][1].append(nodeIP) 
+            print_listaFiles()
+            break
             
 def remover_info_node(nodeIP):
     for ficheiro, node_info in ficheiroDoNodo.items():
@@ -60,7 +70,7 @@ def procurar_file(nomeFile):
                 return None
 
 def handle_node(node_socket):
-    # nodeIP = x
+    nodeIP = node_socket.getpeername()[0]
     while True:    
         message = node_socket.recv(1024).decode()
         
@@ -75,9 +85,7 @@ def handle_node(node_socket):
             
         elif key == "files":
             if len(format) == 3:
-                nodeIP = format[1]
-                # nodeIp = format[1]
-                # print(nodeIp)
+                nodeIp = format[1]
                 data = format[2]
                 guarda_Localizacao(data, nodeIP)
             else:
@@ -97,6 +105,10 @@ def handle_node(node_socket):
             else:
                 print("Ocorreu um erro a pedir o file")
                 
+        elif key == "upd":
+            nomeFile = format[1]
+            update_info_file(nomeFile, nodeIP)
+            
         
 while True:
     # Aceita uma conexão de um cliente
@@ -107,9 +119,8 @@ while True:
     node_thread = threading.Thread(target = handle_node, args = (node_socket,))
     node_thread.start()
     
-    nodeIP = x
-    # nodeIP = node_socket.getpeername()[0]
-    node_threads[nodeIP] = node_thread
+    # nodeIP = x
+    node_threads[x] = node_thread
     
 # Fecha o socket do servidor
 socketTCP.close()

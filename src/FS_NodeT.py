@@ -8,7 +8,9 @@ import os
 MTU = 1200
 ID_SIZE = 4
 TamanhoBloco = MTU - ID_SIZE
-ipNode = socket.gethostbyname(socket.gethostname())
+hostname = socket.gethostname()
+ipNode = socket.gethostbyname(hostname)
+print(hostname)
 
 udpAtivo = True
 
@@ -49,30 +51,24 @@ def calcula_blocos_por_ficheiro(caminho_pasta):
 caminho_pasta = sys.argv[3] 
 ficheiros_comBlocos = calcula_blocos_por_ficheiro(caminho_pasta)
 
-# print(ficheiros_comBlocos)
-
 def transf_file(fileInfo, fileName):
     nodeIPs = fileInfo[1]
     numBlocos = int(fileInfo[0])
-    # print("teste", numBlocos)
     print(nodeIPs)
     
     file = open(os.path.join(caminho_pasta, fileName), "wb")
-    file_size = numBlocos * TamanhoBloco
-    file.seek(file_size-1)
+    file_size = numBlocos * TamanhoBloco + 1
+    file.seek(file_size + 1)
     file.write(b"\0")
     print(file_size)
     
     socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    # socketUDP.bind((ipNode, 9090))
     
     i = 1
     while numBlocos >= i:
-        pedeBloco = f"{fileName}|{i}|{ipNode}"
+        pedeBloco = f"{fileName}|{i}"
         print(pedeBloco)
         socketUDP.sendto(pedeBloco.encode(), (nodeIPs[0], port))  # ip do um node na lista de nodes
-        # socketUDP.sendto(pedeBloco.encode(), ('127.0.1.1', port))
-    
     
         data, addr = socketUDP.recvfrom(MTU)
         print(data.decode())
@@ -87,10 +83,9 @@ def transf_file(fileInfo, fileName):
         file.seek(posInic)
         file.write(conteudoFile)
         
-        
         i += 1
     
-    if i >= numBlocos: file.close()
+    file.close()
     socketUDP.close()
     
         
@@ -125,7 +120,9 @@ def tracker_protocol():
             fileInfo = socketTCP.recv(1024).decode() # (nºblocos, ips)
             fileInfo = ast.literal_eval(fileInfo)
             transf_file(fileInfo, nomeFicheiro)
-        
+            mensagemUpdate = f"upd . {nomeFicheiro}"
+            socketTCP.send(mensagemUpdate.encode())
+       
         elif comando[0] == "comandos":
             print("\tquit: Desligar a ligação ao servidor.")
             print("\tget 'file_name': Digite o nome do file que pretende transferir no lugar de file_name.")
@@ -156,8 +153,7 @@ def env_File(fileName, numBloco, socketUDP, addr):
 def transfer_protocol():
     print(ipNode)
     socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    # socketUDP.bind(('127.0.1.1', 9090))
-    socketUDP.bind((ipNode, 9090)) 
+    socketUDP.bind(('0.0.0.0', 9090)) 
     
     while udpAtivo:
         ready, _, _ = select.select([socketUDP], [], [], 1.0)
@@ -168,9 +164,10 @@ def transfer_protocol():
         
             print(addr)
             
-            fileName, numBloco, ipRetorno = infoFile.split("|")
+            fileName, numBloco = infoFile.split("|")
             env_File(fileName, int(numBloco), socketUDP, addr)
             ready = False
-        
+       
+       
 tracker_thread = threading.Thread(target = tracker_protocol)
 tracker_thread.start()
