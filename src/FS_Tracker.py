@@ -84,9 +84,8 @@ def handle_node(node_socket):
             break
             
         elif key == "files":
-            if len(format) == 3:
-                nodeIp = format[1]
-                data = format[2]
+            if len(format) == 2:
+                data = format[1]
                 guarda_Localizacao(data, nodeIP)
             else:
                 print("Ocorreu um erro a enviar os ficheiros.")
@@ -106,7 +105,10 @@ def handle_node(node_socket):
                 print("Ocorreu um erro a pedir o file")
                 
         elif key == "upd":
-            nomeFile = format[1]
+            if len(format) == 2:
+                	nomeFile = format[1]
+            else:
+                print("Ocorreu um erro a atualizar o ficheiro.")
             update_info_file(nomeFile, nodeIP)
             
         
