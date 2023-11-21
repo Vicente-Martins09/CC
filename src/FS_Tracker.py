@@ -6,7 +6,8 @@ ficheiroDoNodo = {}
 node_threads = {}
 
 # Configuração do servidor
-host = '127.0.0.1'  # Endereço IP do servidor
+# host = 127.0.0.1
+host = '10.4.4.1'  # Endereço IP do servidor
 port = 9090       # Porta que o servidor irá ouvir
 
 # Cria um socket do tipo TCP
@@ -23,9 +24,9 @@ x = 0
 print(f"Servidor escutando em {host}: porta {port}")
 
 def print_listaFiles():
-    print("Ficheiros em cada Node: \n")
+    print("\n#######################\n\nFicheiros em cada Node: \n")
     for nomeFicheiro, node_info in ficheiroDoNodo.items():
-        print(f"{nomeFicheiro} com {node_info[0]} blocos pertence aos nodes com IP {node_info[1]}")
+        print(f"{nomeFicheiro}\n\tBlocos = {node_info[0]}\n\tNodes com ficheiro: {node_info[1]}")
 
 def guarda_Localizacao(data, nodeIP):
         
@@ -105,10 +106,7 @@ def handle_node(node_socket):
                 print("Ocorreu um erro a pedir o file")
                 
         elif key == "upd":
-            if len(format) == 2:
-                	nomeFile = format[1]
-            else:
-                print("Ocorreu um erro a atualizar o ficheiro.")
+            nomeFile = format[1]
             update_info_file(nomeFile, nodeIP)
             
         
