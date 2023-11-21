@@ -6,8 +6,8 @@ ficheiroDoNodo = {}
 node_threads = {}
 
 # Configuração do servidor
-# host = 127.0.0.1
-host = '10.4.4.1'  # Endereço IP do servidor
+host = '127.0.0.1'
+# host = '10.4.4.1'  # Endereço IP do servidor
 port = 9090       # Porta que o servidor irá ouvir
 
 # Cria um socket do tipo TCP
@@ -27,6 +27,10 @@ def print_listaFiles():
     print("\n#######################\n\nFicheiros em cada Node: \n")
     for nomeFicheiro, node_info in ficheiroDoNodo.items():
         print(f"{nomeFicheiro}\n\tBlocos = {node_info[0]}\n\tNodes com ficheiro: {node_info[1]}")
+        if len(node_info[2]) > 0:
+            for node, blocos in node_info[2]:
+                numBlocos = sum(blocos)
+                print(f"\n\tNodes com alguns blocos:\n\t\tNode de ip {node} têm {numBlocos} blocos")
 
 def guarda_Localizacao(data, nodeIP):
         
@@ -37,19 +41,43 @@ def guarda_Localizacao(data, nodeIP):
         if ficheiro in ficheiroDoNodo:
                 ficheiroDoNodo[ficheiro][1].append(nodeIP)
         else:
-            ficheiroDoNodo[ficheiro] = [numBlocks, [nodeIP]]
-            
+            ficheiroDoNodo[ficheiro] = [numBlocks, [nodeIP], []]
+    # print("guarda")        
     print_listaFiles()
  
-def update_info_file(nomeFile, nodeIP):
-    print("aqui")
-    print(nomeFile)
-    for ficheiro, node_info in ficheiroDoNodo.items():
-        print(ficheiro)
-        if ficheiro == nomeFile:
-            ficheiroDoNodo[ficheiro][1].append(nodeIP) 
-            print_listaFiles()
-            break
+def update_info_file(nomeFile, nodeIP, numBloco):
+    
+    if(numBloco == 0):
+        for ficheiro, node_info in ficheiroDoNodo.items():
+            if ficheiro == nomeFile:
+                ficheiroDoNodo[ficheiro][1].append(nodeIP) 
+                nodes_sem_file_compl = ficheiroDoNodo[ficheiro][2]
+                ficheiroDoNodo[ficheiro][2] = [node for node in nodes_sem_file_compl if node[0] != nodeIP]
+                print_listaFiles()
+                break
+    
+    elif(numBloco != 0):
+        for ficheiro, node_info in ficheiroDoNodo.items():    # node_info ---> node_info[0] = blocos totais; node_info[1] = lista de ips com file completo; node_info[2] = lista de tuples de nodes que nao tem o ficheiro completo
+            print(ficheiro)
+            if ficheiro == nomeFile:
+                if nodeIP in [node[0] for node in node_info[2]]:  # cria uma lista com os nodes que ainda não têm o ficheiro completo
+                    for node, blocos in node_info[2]:
+                        if nodeIP == node:
+                            blocos[numBloco - 1] = 1
+                            print(blocos)
+                            print_listaFiles()
+                            break
+                else:
+                    blocos = [0] * int(node_info[0])
+                    blocos[numBloco - 1] = 1
+                    print(blocos)
+                    ficheiroDoNodo[ficheiro][2].append((nodeIP, blocos)) 
+                    print_listaFiles()
+                    break
+    
+    
+                    
+        
             
 def remover_info_node(nodeIP):
     for ficheiro, node_info in ficheiroDoNodo.items():
@@ -58,11 +86,13 @@ def remover_info_node(nodeIP):
                 node_info[1].remove(node)
         
     print(f"Informação do {nodeIP} removida")
+    # print("remover")
     print_listaFiles()
     
 def procurar_file(nomeFile):
     for ficheiro, node_info in ficheiroDoNodo.items():
         if ficheiro == nomeFile:
+            # print("procura")
             if len(node_info[1]) > 0:
                 print_listaFiles()
                 return node_info
@@ -74,7 +104,7 @@ def handle_node(node_socket):
     nodeIP = node_socket.getpeername()[0]
     while True:    
         message = node_socket.recv(1024).decode()
-        
+        print(message)
         format = message.split(" . ")
         key = format[0]
         
@@ -87,7 +117,8 @@ def handle_node(node_socket):
         elif key == "files":
             if len(format) == 2:
                 data = format[1]
-                guarda_Localizacao(data, nodeIP)
+                if data:
+                    guarda_Localizacao(data, nodeIP)
             else:
                 print("Ocorreu um erro a enviar os ficheiros.")
                 
@@ -105,11 +136,18 @@ def handle_node(node_socket):
             else:
                 print("Ocorreu um erro a pedir o file")
                 
-        elif key == "upd":
-            nomeFile = format[1]
-            update_info_file(nomeFile, nodeIP)
-            
-        
+        elif key == "updblc":
+            if len(format) == 3:
+                nomeFile = format[1]
+                num = format[2]
+                numBloco = int(num)
+                update_info_file(nomeFile, nodeIP, numBloco)
+                
+        elif key == "updfin":
+            if len(format) == 2:
+                nomeFile = format[1]
+                update_info_file(nomeFile, nodeIP, 0)
+                
 while True:
     # Aceita uma conexão de um cliente
     node_socket, node_address = socketTCP.accept()

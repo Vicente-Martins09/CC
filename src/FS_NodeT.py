@@ -1,6 +1,7 @@
 import threading
 import select
 import socket
+import time
 import sys
 import ast
 import os
@@ -51,16 +52,15 @@ def calcula_blocos_por_ficheiro(caminho_pasta):
 caminho_pasta = sys.argv[3] 
 ficheiros_comBlocos = calcula_blocos_por_ficheiro(caminho_pasta)
 
-def transf_file(fileInfo, fileName):
+def transf_file(fileInfo, fileName, socketTCP):
     nodeIPs = fileInfo[1]
     numBlocos = int(fileInfo[0])
-    print(nodeIPs)
+    # print(nodeIPs)
     
     file = open(os.path.join(caminho_pasta, fileName), "wb")
     file_expectedsize = numBlocos * TamanhoBloco + 1
     file.seek(file_expectedsize + 1)
     file.write(b"\0")
-    print(file_expectedsize)
     file_size = 0
     
     
@@ -73,7 +73,7 @@ def transf_file(fileInfo, fileName):
         socketUDP.sendto(pedeBloco.encode(), (nodeIPs[0], port))  # ip do um node na lista de nodes
     
         data, addr = socketUDP.recvfrom(MTU)
-        print(data.decode())
+        # print(data.decode())
         if not data:
             print("Erro a receber")
             break
@@ -85,6 +85,11 @@ def transf_file(fileInfo, fileName):
         posInic = TamanhoBloco * (num_Bloco-1)
         file.seek(posInic)
         file.write(conteudoFile)
+        
+        if i != numBlocos:
+            mensagemUpdateBlocos = f"updblc . {fileName} . {i}"
+            print("enviei bloc")
+            socketTCP.send(mensagemUpdateBlocos.encode())
         
         i += 1
     
@@ -124,8 +129,10 @@ def tracker_protocol():
             socketTCP.send(mensagemGet.encode())
             fileInfo = socketTCP.recv(1024).decode() # (nºblocos, ips)
             fileInfo = ast.literal_eval(fileInfo)
-            transf_file(fileInfo, nomeFicheiro)
-            mensagemUpdate = f"upd . {nomeFicheiro}"
+            transf_file(fileInfo, nomeFicheiro, socketTCP)
+            mensagemUpdate = f"updfin . {nomeFicheiro}"
+            time.sleep(0.04)
+            print("enviei fim")
             socketTCP.send(mensagemUpdate.encode())
        
         elif comando[0] == "comandos":
@@ -172,8 +179,7 @@ def transfer_protocol():
             fileName, numBloco = infoFile.split("|")
             env_File(fileName, int(numBloco), socketUDP, addr)
             ready = False
-            
-    
+
        
 tracker_thread = threading.Thread(target = tracker_protocol)
 tracker_thread.start()
