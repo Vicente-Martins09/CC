@@ -57,10 +57,12 @@ def transf_file(fileInfo, fileName):
     print(nodeIPs)
     
     file = open(os.path.join(caminho_pasta, fileName), "wb")
-    file_size = numBlocos * TamanhoBloco + 1
-    file.seek(file_size + 1)
+    file_expectedsize = numBlocos * TamanhoBloco + 1
+    file.seek(file_expectedsize + 1)
     file.write(b"\0")
-    print(file_size)
+    print(file_expectedsize)
+    file_size = 0
+    
     
     socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     
@@ -78,6 +80,7 @@ def transf_file(fileInfo, fileName):
         
         num_Bloco = int.from_bytes(data[:4], byteorder='big')
         conteudoFile = data[4:]
+        file_size += len(conteudoFile)
         
         posInic = TamanhoBloco * (num_Bloco-1)
         file.seek(posInic)
@@ -85,6 +88,8 @@ def transf_file(fileInfo, fileName):
         
         i += 1
     
+    file.seek(0)
+    file.truncate(file_size)
     file.close()
     socketUDP.close()
     
@@ -167,7 +172,7 @@ def transfer_protocol():
             fileName, numBloco = infoFile.split("|")
             env_File(fileName, int(numBloco), socketUDP, addr)
             ready = False
-            
+
    
 udp_thread = threading.Thread(target = transfer_protocol)
 udp_thread.start()
