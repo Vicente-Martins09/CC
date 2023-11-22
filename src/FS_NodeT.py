@@ -8,11 +8,9 @@ import os
 
 MTU = 1200
 ID_SIZE = 4
+# CHECK_SUM = 4
+# TamanhoBloco = MTU - (ID_SIZE + CHECK_SUM)
 TamanhoBloco = MTU - ID_SIZE
-#hostname = socket.gethostname()
-#ipNode = socket.gethostbyname(hostname)
-#print(hostname)
-
 udpAtivo = True
 
 def set_udp_false():
@@ -55,6 +53,7 @@ ficheiros_comBlocos = calcula_blocos_por_ficheiro(caminho_pasta)
 def transf_file(fileInfo, fileName, socketTCP):
     nodeIPs = fileInfo[1]
     numBlocos = int(fileInfo[0])
+    tentativasMAX = 3
     # print(nodeIPs)
     
     if numBlocos < 3:
@@ -76,16 +75,26 @@ def transf_file(fileInfo, fileName, socketTCP):
     blocos = []
     aux = 1
     i = 1
+    pedido = 1
     while numBlocos >= i:
         pedeBloco = f"{fileName}|{i}"
         print(pedeBloco)
-        socketUDP.sendto(pedeBloco.encode(), (nodeIPs[0], port))  # ip do um node na lista de nodes
-    
-        data, addr = socketUDP.recvfrom(MTU)
-        # print(data.decode())
-        if not data:
-            print("Erro a receber")
-            break
+        socketUDP.sendto(pedeBloco.encode(), (nodeIPs[0], port))  # ip do um node na lista de nodes  têm de ser feito uma espera de 3 ms e se nao receber o bloco volta a pedir(3 vezes máximo se não der pede a outro node)
+
+        socketUDP.settimeout(2.0)
+        data = None
+        while pedido <= tentativasMAX:
+            try:
+                data, addr = socketUDP.recvfrom(MTU)
+            except socket.timeout:
+                print("Timeout - retrying...")
+                pedido += 1
+                continue
+            
+            if data:
+                print(data.decode())
+                break
+            
         
         num_Bloco = int.from_bytes(data[:4], byteorder='big')
         conteudoFile = data[4:]
@@ -170,6 +179,7 @@ def env_File(fileName, numBloco, socketUDP, addr):
         numBloco_bytes = numBloco.to_bytes(4, 'big')
 
         dataEnviar = numBloco_bytes + data
+        # checksum = len(dataEnviar)
          
     # print(dataEnviar)
 
