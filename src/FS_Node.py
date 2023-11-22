@@ -57,15 +57,24 @@ def transf_file(fileInfo, fileName, socketTCP):
     numBlocos = int(fileInfo[0])
     # print(nodeIPs)
     
+    if numBlocos < 3:
+        sendupdate = 1
+    elif numBlocos % 3 == 0:
+        sendupdate = numBlocos // 4
+    else:
+        sendupdate = (numBlocos // 4) + 1
+    print(numBlocos)
+    print(sendupdate)
     file = open(os.path.join(caminho_pasta, fileName), "wb")
     file_expectedsize = numBlocos * TamanhoBloco + 1
     file.seek(file_expectedsize + 1)
     file.write(b"\0")
     file_size = 0
     
-    
     socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     
+    blocos = []
+    aux = 1
     i = 1
     while numBlocos >= i:
         pedeBloco = f"{fileName}|{i}"
@@ -85,12 +94,17 @@ def transf_file(fileInfo, fileName, socketTCP):
         posInic = TamanhoBloco * (num_Bloco-1)
         file.seek(posInic)
         file.write(conteudoFile)
+        blocos.append(i)
         
-        if i != numBlocos:
-            mensagemUpdateBlocos = f"updblc . {fileName} . {i}"
-            print("enviei bloc")
+        if i != numBlocos and aux == sendupdate:
+            mensagemUpdateBlocos = f"updblc . {fileName} . {blocos}"  # o i passa a ser um array com os blocos que ja foram escritos, atualiza o código
+            time.sleep(0.02)
+            print("enviei bloc", blocos)
             socketTCP.send(mensagemUpdateBlocos.encode())
+            blocos = []
+            aux = 0
         
+        aux += 1
         i += 1
     
     file.seek(0)
@@ -131,7 +145,7 @@ def tracker_protocol():
             fileInfo = ast.literal_eval(fileInfo)
             transf_file(fileInfo, nomeFicheiro, socketTCP)
             mensagemUpdate = f"updfin . {nomeFicheiro}"
-            time.sleep(0.04)
+            time.sleep(0.018)
             print("enviei fim")
             socketTCP.send(mensagemUpdate.encode())
        
@@ -157,7 +171,7 @@ def env_File(fileName, numBloco, socketUDP, addr):
 
         dataEnviar = numBloco_bytes + data
          
-    print(dataEnviar)
+    # print(dataEnviar)
 
     socketUDP.sendto(dataEnviar, addr)
 
@@ -174,7 +188,7 @@ def transfer_protocol():
             data, addr = socketUDP.recvfrom(1024)
             infoFile = data.decode()
         
-            print(addr)
+            # print(addr)
             
             fileName, numBloco = infoFile.split("|")
             env_File(fileName, int(numBloco), socketUDP, addr)

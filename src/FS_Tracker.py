@@ -45,9 +45,9 @@ def guarda_Localizacao(data, nodeIP):
     # print("guarda")        
     print_listaFiles()
  
-def update_info_file(nomeFile, nodeIP, numBloco):
-    
-    if(numBloco == 0):
+def update_info_file(nomeFile, nodeIP, numBlocos):
+    tamanho = len(numBlocos)
+    if(tamanho == 0):
         for ficheiro, node_info in ficheiroDoNodo.items():
             if ficheiro == nomeFile:
                 ficheiroDoNodo[ficheiro][1].append(nodeIP) 
@@ -56,20 +56,21 @@ def update_info_file(nomeFile, nodeIP, numBloco):
                 print_listaFiles()
                 break
     
-    elif(numBloco != 0):
+    elif(tamanho != 0):
         for ficheiro, node_info in ficheiroDoNodo.items():    # node_info ---> node_info[0] = blocos totais; node_info[1] = lista de ips com file completo; node_info[2] = lista de tuples de nodes que nao tem o ficheiro completo
-            print(ficheiro)
             if ficheiro == nomeFile:
                 if nodeIP in [node[0] for node in node_info[2]]:  # cria uma lista com os nodes que ainda não têm o ficheiro completo
                     for node, blocos in node_info[2]:
                         if nodeIP == node:
-                            blocos[numBloco - 1] = 1
+                            for i in numBlocos:
+                                blocos[i - 1] = 1
                             print(blocos)
                             print_listaFiles()
                             break
                 else:
                     blocos = [0] * int(node_info[0])
-                    blocos[numBloco - 1] = 1
+                    for i in numBlocos:
+                        blocos[i - 1] = 1
                     print(blocos)
                     ficheiroDoNodo[ficheiro][2].append((nodeIP, blocos)) 
                     print_listaFiles()
@@ -140,13 +141,13 @@ def handle_node(node_socket):
             if len(format) == 3:
                 nomeFile = format[1]
                 num = format[2]
-                numBloco = int(num)
-                update_info_file(nomeFile, nodeIP, numBloco)
+                numBlocos = [int(x) for x in num.strip("[]").split(",")]
+                update_info_file(nomeFile, nodeIP, numBlocos)
                 
         elif key == "updfin":
             if len(format) == 2:
                 nomeFile = format[1]
-                update_info_file(nomeFile, nodeIP, 0)
+                update_info_file(nomeFile, nodeIP, [])
                 
 while True:
     # Aceita uma conexão de um cliente
