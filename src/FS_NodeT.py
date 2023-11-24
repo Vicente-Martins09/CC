@@ -1,23 +1,23 @@
 import threading
-import select
 import socket
 import time
 import sys
 import ast
 import os
 
+from Metodo_Transf import *
+
 MTU = 1200
 ID_SIZE = 4
-# CHECK_SUM = 4
-# TamanhoBloco = MTU - (ID_SIZE + CHECK_SUM)
 TamanhoBloco = MTU - ID_SIZE
 udpAtivo = True
+# CHECK_SUM = 4
+# TamanhoBloco = MTU - (ID_SIZE + CHECK_SUM)
 
+# Método que desliga a socket udp de um node que foi desconectado 
 def set_udp_false():
     global udpAtivo
     udpAtivo = False
-
-# print(ipNode)
 
 if len(sys.argv) != 4:
     print("Uso: python cliente.py <IP do host> <Número da Porta> <Pasta com os ficheiros>")
@@ -27,6 +27,7 @@ if len(sys.argv) != 4:
 host = sys.argv[1]  # Endereço IP do servidor
 port = int(sys.argv[2])  # Porta que o servidor está ouvindo
 
+# Métodos que prepara a lista dos ficheiros e os blocos que um node têm e vai colocar na mensagem de conexão ao tracker
 def calcula_num_blocos(caminho_ficheiro):
     tamanhoFicheiro = os.path.getsize(caminho_ficheiro)
     numBlocos = tamanhoFicheiro // TamanhoBloco
@@ -48,80 +49,11 @@ def calcula_blocos_por_ficheiro(caminho_pasta):
         
 # Cria uma lista com o nome dos ficheiros e o número de blocos ocupados dentro de uma pasta
 caminho_pasta = sys.argv[3] 
-ficheiros_comBlocos = calcula_blocos_por_ficheiro(caminho_pasta)
+ficheiros_comBlocos = calcula_blocos_por_ficheiro(caminho_pasta)   
+ 
+# Fim dos métodos de construção da lista de blocos e ficheiros
 
-def transf_file(fileInfo, fileName, socketTCP):
-    nodeIPs = fileInfo[1]
-    numBlocos = int(fileInfo[0])
-    tentativasMAX = 3
-    # print(nodeIPs)
-    
-    if numBlocos < 3:
-        sendupdate = 1
-    elif numBlocos % 3 == 0:
-        sendupdate = numBlocos // 4
-    else:
-        sendupdate = (numBlocos // 4) + 1
-    print(numBlocos)
-    print(sendupdate)
-    file = open(os.path.join(caminho_pasta, fileName), "wb")
-    file_expectedsize = numBlocos * TamanhoBloco + 1
-    file.seek(file_expectedsize + 1)
-    file.write(b"\0")
-    file_size = 0
-    
-    socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    
-    blocos = []
-    aux = 1
-    i = 1
-    pedido = 1
-    while numBlocos >= i:
-        pedeBloco = f"{fileName}|{i}"
-        print(pedeBloco)
-        socketUDP.sendto(pedeBloco.encode(), (nodeIPs[0], port))  # ip do um node na lista de nodes  têm de ser feito uma espera de 3 ms e se nao receber o bloco volta a pedir(3 vezes máximo se não der pede a outro node)
-
-        socketUDP.settimeout(2.0)
-        data = None
-        while pedido <= tentativasMAX:
-            try:
-                data, addr = socketUDP.recvfrom(MTU)
-            except socket.timeout:
-                print("Timeout - retrying...")
-                pedido += 1
-                continue
-            
-            if data:
-                print(data.decode())
-                break
-            
-        
-        num_Bloco = int.from_bytes(data[:4], byteorder='big')
-        conteudoFile = data[4:]
-        file_size += len(conteudoFile)
-        
-        posInic = TamanhoBloco * (num_Bloco-1)
-        file.seek(posInic)
-        file.write(conteudoFile)
-        blocos.append(i)
-        
-        if i != numBlocos and aux == sendupdate:
-            mensagemUpdateBlocos = f"updblc . {fileName} . {blocos}"  # o i passa a ser um array com os blocos que ja foram escritos, atualiza o código
-            time.sleep(0.02)
-            print("enviei bloc", blocos)
-            socketTCP.send(mensagemUpdateBlocos.encode())
-            blocos = []
-            aux = 0
-        
-        aux += 1
-        i += 1
-    
-    file.seek(0)
-    file.truncate(file_size)
-    file.close()
-    socketUDP.close()
-    
-        
+# Método que estabelece a comunicação de um Node com o Tracker    
 def tracker_protocol():
     # Cria um socket do tipo TCP
     socketTCP = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -152,7 +84,7 @@ def tracker_protocol():
             socketTCP.send(mensagemGet.encode())
             fileInfo = socketTCP.recv(1024).decode() # (nºblocos, ips)
             fileInfo = ast.literal_eval(fileInfo)
-            transf_file(fileInfo, nomeFicheiro, socketTCP)
+            transf_file(fileInfo, caminho_pasta,  nomeFicheiro, socketTCP, port)
             mensagemUpdate = f"updfin . {nomeFicheiro}"
             time.sleep(0.018)
             print("enviei fim")
@@ -164,46 +96,6 @@ def tracker_protocol():
             print("\tcomandos: Lista os comandos existentes.")
         
     socketTCP.close()
-
-def env_File(fileName, numBloco, socketUDP, addr):     
-    caminhoFile = os.path.join(caminho_pasta, fileName)
-      
-    with open(caminhoFile, "rb") as file:
-        posInic = TamanhoBloco * (numBloco-1)
-        file.seek(posInic)
-
-        data = file.read(TamanhoBloco)
-        if not data:
-            print("Erro a ler a data")  
-            
-        numBloco_bytes = numBloco.to_bytes(4, 'big')
-
-        dataEnviar = numBloco_bytes + data
-        # checksum = len(dataEnviar)
-         
-    # print(dataEnviar)
-
-    socketUDP.sendto(dataEnviar, addr)
-
-     
-def transfer_protocol():
-    # print(ipNode)
-    socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    socketUDP.bind(('0.0.0.0', 9090)) 
-    
-    while udpAtivo:
-        ready, _, _ = select.select([socketUDP], [], [], 1.0)
-        
-        if ready:
-            data, addr = socketUDP.recvfrom(1024)
-            infoFile = data.decode()
-        
-            # print(addr)
-            
-            fileName, numBloco = infoFile.split("|")
-            env_File(fileName, int(numBloco), socketUDP, addr)
-            ready = False
-
-       
+          
 tracker_thread = threading.Thread(target = tracker_protocol)
 tracker_thread.start()
