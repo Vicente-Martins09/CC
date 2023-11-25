@@ -86,9 +86,30 @@ def procurar_file(nomeFile):
     for ficheiro, node_info in ficheiroDoNodo.items():
         if ficheiro == nomeFile:
             # print("procura")
-            if len(node_info[1]) > 0:
+            if len(node_info[1]) > 0 or len(node_info[2]) > 0:
                 print_listaFiles()
                 return node_info
             else:
                 print_listaFiles()
                 return None
+            
+# Método que recebe a informação dos Nodes relativa a cada ficheiro e transforma num array com a lista dos ips dos Nodes que contêm os blocos na posição do array nº bloco - 1
+def blocos_por_node(fileCompl, fileIncpl, numBlocos):   # ['127.0.0.1']  [('127.0.0.1', [1, 1, 1, 0])]] 4
+    blocosIps = []
+    array_node = []
+    i = 0
+    
+    while i < numBlocos:
+        for ip in fileCompl:
+            array_node.append(ip)
+            
+        
+        for tpl in fileIncpl:
+            if tpl[1][i] == 1:
+                array_node.append(tpl[0])
+        
+        blocosIps.append(array_node)
+        array_node = []
+        i += 1
+ 
+    return blocosIps

@@ -44,6 +44,8 @@ def handle_node(node_socket):
                 data = format[1]
                 if data:
                     guarda_Localizacao(data, nodeIP)
+                    # guarda_Localizacao("file3.txt-2", "10.0.0.5")
+                    # update_info_file("file3.txt", "10.0.0.2", [2])
             else:
                 print("Ocorreu um erro a enviar os ficheiros.")
                 
@@ -51,9 +53,13 @@ def handle_node(node_socket):
             if len(format) == 2:
                 nomeFile = format[1]
                 localizacao = procurar_file(nomeFile)
+                print(localizacao)
                 
                 if localizacao is not None:
-                    response = f"{localizacao}"
+                    numBlocos = int(localizacao[0])
+                    ips = blocos_por_node(localizacao[1], localizacao[2], numBlocos)
+                    node_info = (numBlocos, ips)
+                    response = f"{node_info}"
                 else:
                     response = "File not found"
 

@@ -1,5 +1,6 @@
 import socket
 import time
+import ast
 import os
 
 MTU = 1200
@@ -13,7 +14,7 @@ def transf_file(fileInfo, caminho_pasta, fileName, socketTCP, port):
     nodeIPs = fileInfo[1]
     numBlocos = int(fileInfo[0])
     tentativasMAX = 3
-    # print(nodeIPs)
+    print(nodeIPs)
     
     if numBlocos < 3:
         sendupdate = 1
@@ -38,7 +39,7 @@ def transf_file(fileInfo, caminho_pasta, fileName, socketTCP, port):
     while numBlocos >= i:
         pedeBloco = f"{fileName}|{i}"
         print(pedeBloco)
-        socketUDP.sendto(pedeBloco.encode(), (nodeIPs[0], port))  # ip do um node na lista de nodes  têm de ser feito uma espera de 3 ms e se nao receber o bloco volta a pedir(3 vezes máximo se não der pede a outro node)
+        socketUDP.sendto(pedeBloco.encode(), (nodeIPs[0][0], port))  # ip do um node na lista de nodes  têm de ser feito uma espera de 3 ms e se nao receber o bloco volta a pedir(3 vezes máximo se não der pede a outro node)
 
         socketUDP.settimeout(2.0)
         data = None
@@ -51,7 +52,7 @@ def transf_file(fileInfo, caminho_pasta, fileName, socketTCP, port):
                 continue
             
             if data:
-                print(data.decode())
+                # print(data.decode())
                 break
             
         if data:    

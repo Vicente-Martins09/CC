@@ -83,8 +83,8 @@ def tracker_protocol():
             nomeFicheiro = comando[1]  # Obtém o nome do arquivo
             mensagemGet = f"get . {nomeFicheiro}"
             socketTCP.send(mensagemGet.encode())
-            fileInfo = socketTCP.recv(1024).decode() # (nºblocos, ips)
-            fileInfo = ast.literal_eval(fileInfo)
+            fileInfo_str = socketTCP.recv(1024).decode() # (nºblocos, ips)
+            fileInfo = ast.literal_eval(fileInfo_str)
             transf_file(fileInfo, caminho_pasta,  nomeFicheiro, socketTCP, port)
             mensagemUpdate = f"updfin . {nomeFicheiro}"
             time.sleep(0.018)
