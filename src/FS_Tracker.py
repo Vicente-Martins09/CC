@@ -7,8 +7,8 @@ from Struct_FileNodes import *
 node_threads = {}
 
 # Configuração do servidor
-host = '127.0.0.1'
-# host = '10.4.4.1'  # Endereço IP do servidor
+# host = '127.0.0.1'
+host = '10.4.4.1'  # Endereço IP do servidor
 port = 9090       # Porta que o servidor irá ouvir
 
 # Cria um socket do tipo TCP
@@ -26,58 +26,72 @@ print(f"Servidor escutando em {host}: porta {port}")
 
 # Método que interage diretamente com o Node
 def handle_node(node_socket):
+    trackerAtivo = True
     nodeIP = node_socket.getpeername()[0]
-    while True:    
-        message = node_socket.recv(1024).decode()
-        print(message)
-        format = message.split(" . ")
-        key = format[0]
-        
-        if key == "quit":
-            print("Node desconectado")
-            remover_info_node(nodeIP)
-            node_socket.close()
-            break
-            
-        elif key == "files":
-            if len(format) == 2:
-                data = format[1]
-                if data:
-                    guarda_Localizacao(data, nodeIP)
-                    # guarda_Localizacao("file3.txt-2", "10.0.0.5")
-                    # update_info_file("file3.txt", "10.0.0.2", [2])
-            else:
-                print("Ocorreu um erro a enviar os ficheiros.")
-                
-        elif key == "get":
-            if len(format) == 2:
-                nomeFile = format[1]
-                localizacao = procurar_file(nomeFile)
-                print(localizacao)
-                
-                if localizacao is not None:
-                    numBlocos = int(localizacao[0])
-                    ips = blocos_por_node(localizacao[1], localizacao[2], numBlocos)
-                    node_info = (numBlocos, ips)
-                    response = f"{node_info}"
-                else:
-                    response = "File not found"
+    buffer = b''
+    while trackerAtivo:    
+        data = node_socket.recv(1024)
+        # print(data)
+        buffer += data
+        messages = buffer.split(b'\n') 
+        buffer = messages.pop()
+        print(messages, "messages")
 
-                node_socket.send(response.encode())
-            else:
-                print("Ocorreu um erro a pedir o file")
+        for message in messages:
+            print(message)
+            message_str = message.decode()
+            print(message_str)
+            format = message_str.split(" . ")
+            key = format[0]
+            print(key, "chave")
+        
+            if key == "quit":
+                print("Node desconectado")
+                remover_info_node(nodeIP)
+                node_socket.close()
+                trackerAtivo = False
+                break
                 
-        elif key == "updblc":
-            if len(format) == 3:
-                nomeFile = format[1]
-                num = format[2]
-                numBlocos = [int(x) for x in num.strip("[]").split(",")]
-                update_info_file(nomeFile, nodeIP, numBlocos)
-                
-        elif key == "updfin":
-            if len(format) == 2:
-                nomeFile = format[1]
-                update_info_file(nomeFile, nodeIP, [])
+            elif key == "files":
+                if len(format) == 2:
+                    data = format[1]
+                    if data:
+                        guarda_Localizacao(data, nodeIP)
+                        # guarda_Localizacao("file3.txt-2", "10.0.0.5")
+                        # update_info_file("file3.txt", "10.0.0.2", [2])
+                else:
+                    print("Ocorreu um erro a enviar os ficheiros.")
+                    
+            elif key == "get":
+                if len(format) == 2:
+                    nomeFile = format[1]
+                    localizacao = procurar_file(nomeFile)
+                    print(localizacao)
+                    
+                    if localizacao is not None:
+                        numBlocos = int(localizacao[0])
+                        ipsIndv = len(localizacao[1]) + len(localizacao[2])  # numero máximo de blocos que se pode transferir
+                        ips = blocos_por_node(localizacao[1], localizacao[2], numBlocos)
+                        node_info = (numBlocos, ips, ipsIndv)
+                        response = f"{node_info}"
+                    else:
+                        response = "File not found"
+
+                    node_socket.send(response.encode())
+                else:
+                    print("Ocorreu um erro a pedir o file")
+                    
+            elif key == "updblc":
+                if len(format) == 3:
+                    nomeFile = format[1]
+                    num = format[2]
+                    numBlocos = [int(x) for x in num.strip("[]").split(",")]
+                    update_info_file(nomeFile, nodeIP, numBlocos)
+                    
+            elif key == "updfin":
+                if len(format) == 2:
+                    nomeFile = format[1]
+                    update_info_file(nomeFile, nodeIP, [])
                 
 while True:
     # Aceita uma conexão de um cliente

@@ -1,3 +1,4 @@
+import threading
 import socket
 import time
 import ast
@@ -9,21 +10,20 @@ ID_SIZE = 4
 # TamanhoBloco = MTU - (ID_SIZE + CHECK_SUM)
 TamanhoBloco = MTU - ID_SIZE
 
+socketTCP_lock = threading.Lock()
+
+def send_update(message, socketTCP):
+    with socketTCP_lock:
+        socketTCP.send(message.encode())
+
 # Método que o Node usa para transferir um ficheiro
 def transf_file(fileInfo, caminho_pasta, fileName, socketTCP, port):
     nodeIPs = fileInfo[1]
     numBlocos = int(fileInfo[0])
     tentativasMAX = 3
     print(nodeIPs)
-    
-    if numBlocos < 3:
-        sendupdate = 1
-    elif numBlocos % 3 == 0:
-        sendupdate = numBlocos // 4
-    else:
-        sendupdate = (numBlocos // 4) + 1
     print(numBlocos)
-    print(sendupdate)
+    
     file = open(os.path.join(caminho_pasta, fileName), "wb")
     file_expectedsize = numBlocos * TamanhoBloco + 1
     file.seek(file_expectedsize + 1)
@@ -65,15 +65,10 @@ def transf_file(fileInfo, caminho_pasta, fileName, socketTCP, port):
             file.write(conteudoFile)
             blocos.append(i)
             
-            if i != numBlocos and aux == sendupdate:
-                mensagemUpdateBlocos = f"updblc . {fileName} . {blocos}"  # o i passa a ser um array com os blocos que ja foram escritos, atualiza o código
-                time.sleep(0.02)
-                print("enviei bloc", blocos)
-                socketTCP.send(mensagemUpdateBlocos.encode())
-                blocos = []
-                aux = 0
-            
-            aux += 1
+            mensagemUpdateBlocos = f"updblc . {fileName} . {blocos}\n"  # o i passa a ser um array com os blocos que ja foram escritos, atualiza o código
+            send_update(mensagemUpdateBlocos, socketTCP)
+            print("enviei bloc", blocos)
+            blocos = []
         i += 1
     
     file.seek(0)

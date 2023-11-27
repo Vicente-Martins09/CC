@@ -63,7 +63,7 @@ def tracker_protocol():
     socketTCP.connect((host, port))
     
     # Cria a mensagem que é enviada assim que o node conecta ao tracker
-    mensagemFiles = f"files . " + ' | '.join([f"{file}-{blocks}" for file, blocks in ficheiros_comBlocos])
+    mensagemFiles = f"files . " + ' | '.join([f"{file}-{blocks}" for file, blocks in ficheiros_comBlocos]) + '\n'
     socketTCP.send(mensagemFiles.encode())
     
     print("Escreva 'comandos' em caso de dúvida")
@@ -74,20 +74,19 @@ def tracker_protocol():
         comando = user_input.strip().lower().split(' ')
         
         if comando[0] == "quit":
-            socketTCP.send("quit . ".encode())
+            socketTCP.send("quit . \n".encode())
             print("Desligada a conexão ao servidor")
             set_udp_false()
             break
         
         elif comando[0] == "get":
             nomeFicheiro = comando[1]  # Obtém o nome do arquivo
-            mensagemGet = f"get . {nomeFicheiro}"
+            mensagemGet = f"get . {nomeFicheiro}\n"
             socketTCP.send(mensagemGet.encode())
             fileInfo_str = socketTCP.recv(1024).decode() # (nºblocos, ips)
             fileInfo = ast.literal_eval(fileInfo_str)
             transf_file(fileInfo, caminho_pasta,  nomeFicheiro, socketTCP, port)
-            mensagemUpdate = f"updfin . {nomeFicheiro}"
-            time.sleep(0.018)
+            mensagemUpdate = f"updfin . {nomeFicheiro}\n"
             print("enviei fim")
             socketTCP.send(mensagemUpdate.encode())
        
