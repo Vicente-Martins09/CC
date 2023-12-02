@@ -35,19 +35,21 @@ def handle_node(node_socket):
         buffer += data
         messages = buffer.split(b'\n') 
         buffer = messages.pop()
-        print(messages, "messages")
+        #print(messages, "messages")
 
         for message in messages:
-            print(message)
+            #print(message)
             message_str = message.decode()
-            print(message_str)
-            format = message_str.split(" . ")
+            #print(message_str)
+            format = message_str.split("/")
             key = format[0]
             print(key, "chave")
         
             if key == "quit":
                 print("Node desconectado")
+                relembrar_nota(nodeIP)
                 remover_info_node(nodeIP)
+                # remover_info_node('10.0.0.2')
                 node_socket.close()
                 trackerAtivo = False
                 break
@@ -66,7 +68,7 @@ def handle_node(node_socket):
                 if len(format) == 2:
                     nomeFile = format[1]
                     localizacao = procurar_file(nomeFile)
-                    print(localizacao)
+                    print(localizacao, "localizacao")
                     
                     if localizacao is not None:
                         numBlocos = int(localizacao[0])
@@ -75,23 +77,26 @@ def handle_node(node_socket):
                         node_info = (numBlocos, ips, ipsIndv)
                         response = f"{node_info}"
                     else:
-                        response = "File not found"
+                        response = "None"
 
                     node_socket.send(response.encode())
                 else:
                     print("Ocorreu um erro a pedir o file")
                     
             elif key == "updblc":
-                if len(format) == 3:
+                if len(format) == 5:
                     nomeFile = format[1]
                     num = format[2]
+                    peso = int(format[3])
+                    ipPeso = format[4] 
+                    print(peso, ipPeso)
                     numBlocos = [int(x) for x in num.strip("[]").split(",")]
-                    update_info_file(nomeFile, nodeIP, numBlocos)
+                    update_info_file(nomeFile, nodeIP, numBlocos, ipPeso, peso)
                     
             elif key == "updfin":
                 if len(format) == 2:
                     nomeFile = format[1]
-                    update_info_file(nomeFile, nodeIP, [])
+                    update_info_file(nomeFile, nodeIP, [], 0, 0)
                 
 while True:
     # Aceita uma conexão de um cliente

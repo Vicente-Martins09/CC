@@ -10,10 +10,9 @@ from Metodo_Transf import *
 
 MTU = 1200
 ID_SIZE = 4
-TamanhoBloco = MTU - ID_SIZE
+CHECK_SUM = 2
+TamanhoBloco = MTU - (ID_SIZE + CHECK_SUM)
 udpAtivo = True
-# CHECK_SUM = 4
-# TamanhoBloco = MTU - (ID_SIZE + CHECK_SUM)
 
 # Método que desliga a socket udp de um node que foi desconectado 
 def set_udp_false():
@@ -43,8 +42,8 @@ def calcula_blocos_por_ficheiro(caminho_pasta):
     
     for filename in os.listdir(caminho_pasta):
         caminho_ficheiro = os.path.join(caminho_pasta, filename)
-        n_Blocos = calcula_num_blocos(caminho_ficheiro)
-        ficheiros_comBlocos.append((filename, n_Blocos))
+        blocosTotais = calcula_num_blocos(caminho_ficheiro)
+        ficheiros_comBlocos.append((filename, blocosTotais))
         
     return ficheiros_comBlocos
         
@@ -63,7 +62,7 @@ def tracker_protocol():
     socketTCP.connect((host, port))
     
     # Cria a mensagem que é enviada assim que o node conecta ao tracker
-    mensagemFiles = f"files . " + ' | '.join([f"{file}-{blocks}" for file, blocks in ficheiros_comBlocos]) + '\n'
+    mensagemFiles = f"files/" + ' | '.join([f"{file}-{blocks}" for file, blocks in ficheiros_comBlocos]) + '\n'
     socketTCP.send(mensagemFiles.encode())
     
     print("Escreva 'comandos' em caso de dúvida")
@@ -74,21 +73,24 @@ def tracker_protocol():
         comando = user_input.strip().lower().split(' ')
         
         if comando[0] == "quit":
-            socketTCP.send("quit . \n".encode())
+            socketTCP.send("quit/\n".encode())
             print("Desligada a conexão ao servidor")
             set_udp_false()
             break
         
         elif comando[0] == "get":
             nomeFicheiro = comando[1]  # Obtém o nome do arquivo
-            mensagemGet = f"get . {nomeFicheiro}\n"
+            mensagemGet = f"get/{nomeFicheiro}\n"
             socketTCP.send(mensagemGet.encode())
             fileInfo_str = socketTCP.recv(1024).decode() # (nºblocos, ips)
-            fileInfo = ast.literal_eval(fileInfo_str)
-            transf_file(fileInfo, caminho_pasta,  nomeFicheiro, socketTCP, port)
-            mensagemUpdate = f"updfin . {nomeFicheiro}\n"
-            print("enviei fim")
-            socketTCP.send(mensagemUpdate.encode())
+            if fileInfo_str == "None":
+                print("O ficheiro que está a tentar transferir não existe")
+            else:
+                fileInfo = ast.literal_eval(fileInfo_str)
+                transf_file(fileInfo, caminho_pasta,  nomeFicheiro, socketTCP, port)
+                mensagemUpdate = f"updfin/{nomeFicheiro}\n"
+                print("enviei fim")
+                socketTCP.send(mensagemUpdate.encode())
        
         elif comando[0] == "comandos":
             print("\tquit: Desligar a ligação ao servidor.")
@@ -108,11 +110,16 @@ def transfer_protocol():
         if ready:
             data, addr = socketUDP.recvfrom(1024)
             infoFile = data.decode()
-        
-            # print(addr)
-            
-            fileName, numBloco = infoFile.split("|")
-            env_File(caminho_pasta, fileName, int(numBloco), socketUDP, addr)
+            #print(infoFile)
+            #print(addr)
+            if infoFile == "Ping":
+                reply = "Pong"
+                socketUDP.sendto(reply.encode(), addr)
+                #print("enviei", reply)
+            else:
+                fileName, numBloco = infoFile.split("|")
+                #print(numBloco)
+                env_File(caminho_pasta, fileName, int(numBloco), socketUDP, addr)
             ready = False
    
 udp_thread = threading.Thread(target = transfer_protocol)
