@@ -1,5 +1,5 @@
-import socket
 import threading
+import socket
 
 from Struct_FileNodes import *
 

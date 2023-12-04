@@ -1,5 +1,6 @@
 import threading
 import socket
+import copy
 import time
 import ast
 import os
@@ -13,6 +14,7 @@ TamanhoBloco = MTU - (ID_SIZE + CHECK_SUM)
 tentativasMAX = 3
 
 file_size = 0
+blocos_em_falta = []
 
 # Método que pede e recebe os blocos aos nodes
 # Começa por determinar o tempo de espera que irá ser utilizado a cada pedido
@@ -24,6 +26,7 @@ file_size = 0
 # e o peso que têm de atualizar ao node a quem transferiu o bloco
 def pedir_file(file, filename, ip, peso, port, blocos, lockFile, socketTCP):
     global file_size
+    global blocos_em_falta
     blocoUpd = []
     aux = 1
     timeout = 10
@@ -111,6 +114,8 @@ def pedir_file(file, filename, ip, peso, port, blocos, lockFile, socketTCP):
             blocoUpd = []
         else:
             print("Não recebi o bloco", i)
+
+            blocos_em_falta.append(i)
         
         socketUDP.close()
 
@@ -120,9 +125,13 @@ def pedir_file(file, filename, ip, peso, port, blocos, lockFile, socketTCP):
 # No caso de haver uma diferença na prioridade dos nodes (haver um node com mais peso que os outros nodes) quanto mais peso um node têm mais blocos lhe serão pedidos
 def transf_file(fileInfo, caminho_pasta, fileName, socketTCP, port):
     global file_size
+    global blocos_em_falta
     lockFile = threading.Lock()
 
     listaNodes = fileInfo[1]
+    listaNodes = ordena_por_nodes(listaNodes)
+    listaIpsAux = copy.deepcopy(listaNodes)
+
     numBlocos = int(fileInfo[0])
     ipsIndv = int(fileInfo[2])
     
@@ -132,7 +141,7 @@ def transf_file(fileInfo, caminho_pasta, fileName, socketTCP, port):
     file.write(b"\0")
     
     if ipsIndv == 1:
-        blocos, err = escolhe_nodes(ordena_por_nodes(listaNodes), ipsIndv, numBlocos)
+        blocos, err = escolhe_nodes(listaNodes, ipsIndv, numBlocos)
         listaFinal = lista_pedir_blocos(blocos)
         #print(listaFinal, "if ipsIndv == 1")
         pedir_file(file, fileName, listaFinal[0][0][0], int(listaFinal[0][0][1]), port, listaFinal[0][1], lockFile, socketTCP)
@@ -141,7 +150,7 @@ def transf_file(fileInfo, caminho_pasta, fileName, socketTCP, port):
         MaxBlocos = numBlocos // ipsIndv
         if numBlocos % ipsIndv != 0 :
             MaxBlocos += 1
-        blocos, err = escolhe_nodes(ordena_por_nodes(listaNodes), ipsIndv, MaxBlocos)
+        blocos, err = escolhe_nodes(listaNodes, ipsIndv, MaxBlocos)
         listaFinal = lista_pedir_blocos(blocos)
         #print(listaFinal, "elif == 0")
 
@@ -157,7 +166,7 @@ def transf_file(fileInfo, caminho_pasta, fileName, socketTCP, port):
         
     elif verifica_existe_prioridade(listaNodes, ipsIndv) != 0 and ipsIndv > 1:
         MaxBlocos = 5
-        blocos, blocos_por_pedir = escolhe_nodes(ordena_por_nodes(listaNodes), ipsIndv, MaxBlocos)
+        blocos, blocos_por_pedir = escolhe_nodes(listaNodes, ipsIndv, MaxBlocos)
         listaFinal = lista_pedir_blocos(blocos)
         #print(listaFinal, "elif != 0")
         
@@ -179,7 +188,28 @@ def transf_file(fileInfo, caminho_pasta, fileName, socketTCP, port):
             listaFinal, blocos_por_pedir = escolhe_nodes(blocos_por_pedir, ipsIndv, MaxBlocos)
             listaFinal = lista_pedir_blocos(listaFinal)
             iteracoes += 1
-        
+    
+    faltamBlocos = verifica_lista(blocos_em_falta)
+
+    while faltamBlocos:
+        print("A pedir novamente os blocos:", blocos_em_falta)
+        listaBlocosEmFalta = filtraLista(listaIpsAux,blocos_em_falta)
+        blocos, err = escolhe_nodes(listaBlocosEmFalta, ipsIndv, 5)
+        listaFinal = lista_pedir_blocos(blocos)
+
+        blocos_em_falta = []
+
+        threads = []
+        for ip, blocos in listaFinal:
+            thread = threading.Thread(target=pedir_file, args=(file, fileName, ip[0], ip[1], port, blocos, lockFile, socketTCP))
+            thread.start()
+            threads.append(thread)
+
+        for thread in threads:
+            thread.join()
+
+        faltamBlocos = verifica_lista(blocos_em_falta)
+
     file.truncate(file_size)
     file.close()
     file_size = 0

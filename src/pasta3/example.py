@@ -72,15 +72,21 @@ def escolhe_nodes(listaIps, ipsIndv, N):
 
    return ipsEscolhidos, []
 
-def lista_pedir_blocos(listaIps, blocos):
+def lista_pedir_blocos(listaIps):
    aux = {}
 
    for ip, bloco in listaIps:
-      if(blocos.count(bloco+1) == 0):
-         aux.setdefault(ip[0], []).append(bloco + 1)
+      aux.setdefault(ip, []).append(bloco+1)
    ipBlocos = [(ip, blocos) for ip, blocos in aux.items()]
 
    return ipBlocos
+
+def filtraLista (listaIps, listaBlocosemFalta):
+   lista_final = []
+   for tup in listaIps:
+      if listaBlocosemFalta.count(tup[1]+1) == 1:
+         lista_final.append(tup)
+   return lista_final
 
 blocos = [1,2]
 ipsIndv = 3
@@ -149,15 +155,18 @@ listaIps5 = [[('ip1', 0), ('ip2', 0)],  #0
 #print(aux2, "Aux2")
 
 listaIps6 = [[('ip1', 0)], [('ip1', 0)], [('ip1', 0)], [('ip1', 0)], [('ip1', 0)], [('ip1', 0)], [('ip1', 0)], [('ip1', 0)], [('ip1', 0)], [('ip1', 0)], [('ip1', 0)]]
-
+print(listaIps6)
 teste6 = ordena_por_nodes(listaIps6)
 print(teste6, "teste")
-#print(escolhe_nodes(teste6, 1, 4))
-#print(lista_pedir_blocos(escolhe_nodes(teste6, 1)))
+teste9 = filtraLista(teste6,blocos)
+print(teste9)
+teste9, err = escolhe_nodes(teste9, 1, 4)
+print(teste9)
+print(lista_pedir_blocos(teste9))
 #lista = [([('ip2', 0)], 15), ([('ip2', 0), ('ip3', 0)], 1), ([('ip2', 0), ('ip3', 0)], 5), ([('ip2', 0), ('ip3', 0)], 6), ([('ip2', 0), ('ip3', 0)], 9)]
 #aux4, aux6 = escolhe_nodes(lista, 3, 4)
 #print(aux4, "teste")
-lista1 = [([('10.1.1.1', 28), ('10.1.1.2', 19)], 0), ([('10.1.1.1', 28), ('10.1.1.2', 19)], 1), ([('10.1.1.1', 28), ('10.1.1.2', 19)], 2),([('10.1.1.1', 28), ('10.1.1.2', 19)], 3), ([('10.1.1.1', 28), ('10.1.1.2', 19)], 4), ([('10.1.1.1', 28), ('10.1.1.2', 19)], 5), ([('10.1.1.1', 28), ('10.1.1.2', 19)], 6)] 
-aux, aux1 = escolhe_nodes(lista1, 2, 3)
-print(aux)
-print(aux1)
+#lista1 = [([('10.1.1.1', 28), ('10.1.1.2', 19)], 0), ([('10.1.1.1', 28), ('10.1.1.2', 19)], 1), ([('10.1.1.1', 28), ('10.1.1.2', 19)], 2),([('10.1.1.1', 28), ('10.1.1.2', 19)], 3), ([('10.1.1.1', 28), ('10.1.1.2', 19)], 4), ([('10.1.1.1', 28), ('10.1.1.2', 19)], 5), ([('10.1.1.1', 28), ('10.1.1.2', 19)], 6)] 
+#aux, aux1 = escolhe_nodes(lista1, 2, 3)
+#print(aux)
+#print(aux1)

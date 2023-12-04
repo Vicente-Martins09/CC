@@ -90,3 +90,17 @@ def lista_pedir_blocos(listaIps):
    ipBlocos = [(ip, blocos) for ip, blocos in aux.items()]
 
    return ipBlocos
+
+# Método que verifica se ainda existem blocos que não foram recebidos
+def verifica_lista(blocos):
+   if blocos == []:
+      return False
+   return True
+
+# Método que filtra a lista de Nodes de modo a apenas aparecerem aqueles que têm os blocos em falta
+def filtraLista (listaIps, listaBlocosemFalta):
+   lista_final = []
+   for tup in listaIps:
+      if listaBlocosemFalta.count(tup[1]+1) == 1:
+         lista_final.append(tup)
+   return lista_final
