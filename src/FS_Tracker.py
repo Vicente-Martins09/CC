@@ -28,6 +28,7 @@ print(f"Servidor escutando em {host}: porta {port}")
 def handle_node(node_socket):
     trackerAtivo = True
     nodeIP = node_socket.getpeername()[0]
+    hostname, _, _ = socket.gethostbyaddr(nodeIP)
     buffer = b''
     while trackerAtivo:    
         data = node_socket.recv(1024)
@@ -47,8 +48,8 @@ def handle_node(node_socket):
         
             if key == "quit":
                 print("Node desconectado")
-                relembrar_nota(nodeIP)
-                remover_info_node(nodeIP)
+                relembrar_nota(hostname)
+                remover_info_node(hostname)
                 # remover_info_node('10.0.0.2')
                 node_socket.close()
                 trackerAtivo = False
@@ -58,7 +59,7 @@ def handle_node(node_socket):
                 if len(format) == 2:
                     data = format[1]
                     if data:
-                        guarda_Localizacao(data, nodeIP)
+                        guarda_Localizacao(data, hostname)
                         # guarda_Localizacao("file3.txt-2", "10.0.0.5")
                         # update_info_file("file3.txt", "10.0.0.2", [2])
                 else:
@@ -88,15 +89,15 @@ def handle_node(node_socket):
                     nomeFile = format[1]
                     num = format[2]
                     peso = int(format[3])
-                    ipPeso = format[4] 
-                    print(peso, ipPeso)
+                    hostnamePeso = format[4] 
+                    print(peso, hostnamePeso)
                     numBlocos = [int(x) for x in num.strip("[]").split(",")]
-                    update_info_file(nomeFile, nodeIP, numBlocos, ipPeso, peso)
+                    update_info_file(nomeFile, hostname, numBlocos, hostnamePeso, peso)
                     
             elif key == "updfin":
                 if len(format) == 2:
                     nomeFile = format[1]
-                    update_info_file(nomeFile, nodeIP, [], 0, 0)
+                    update_info_file(nomeFile, hostname, [], 0, 0)
                 
 while True:
     # Aceita uma conexão de um cliente

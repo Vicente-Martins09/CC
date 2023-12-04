@@ -24,9 +24,12 @@ blocos_em_falta = []
 # No caso de ter de voltar a pedir é decrementado em -2 o peso do mesmo node sendo assim definido a prioridade de cada node
 # Cada vez que o node que está a transferir recebe um bloco ele envia um update ao tracker a dizer o bloco que recebeu
 # e o peso que têm de atualizar ao node a quem transferiu o bloco
-def pedir_file(file, filename, ip, peso, port, blocos, lockFile, socketTCP):
+def pedir_file(file, filename, hostname, peso, port, blocos, lockFile, socketTCP):
     global file_size
     global blocos_em_falta
+
+    print(hostname)
+    ip = socket.gethostbyname(hostname)
     blocoUpd = []
     aux = 1
     timeout = 10
@@ -62,7 +65,7 @@ def pedir_file(file, filename, ip, peso, port, blocos, lockFile, socketTCP):
 
         pedido = 1
         pedeBloco = f"{filename}|{i}"
-        print(ip, pedeBloco)
+        #print(ip, pedeBloco)
         socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         socketUDP.settimeout(timeout)
         socketUDP.sendto(pedeBloco.encode(), (ip, port))
@@ -108,9 +111,9 @@ def pedir_file(file, filename, ip, peso, port, blocos, lockFile, socketTCP):
 
             blocoUpd.append(i)
 
-            mensagemUpdateBlocos = f"updblc/{filename}/{blocoUpd}/{peso}/{ip}\n" 
+            mensagemUpdateBlocos = f"updblc/{filename}/{blocoUpd}/{peso}/{hostname}\n" 
             socketTCP.send(mensagemUpdateBlocos.encode())
-            print("enviei bloc", blocoUpd)
+            #print("enviei bloc", mensagemUpdateBlocos)
             blocoUpd = []
         else:
             print("Não recebi o bloco", i)
@@ -131,7 +134,7 @@ def transf_file(fileInfo, caminho_pasta, fileName, socketTCP, port):
     listaNodes = ordena_por_nodes(listaNodes)
     listaIpsAux = copy.deepcopy(listaNodes)
     print(listaNodes)
-    
+
     numBlocos = int(fileInfo[0])
     ipsIndv = int(fileInfo[2])
     
