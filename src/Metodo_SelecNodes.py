@@ -5,7 +5,7 @@ import copy
 def verifica_existe_prioridade(listaIps, ipsIndv):  # listaIps = [[('ip1', 4), ('ip2', 7), ('ip3', -3)], [('ip2', 7)]] res = 1  listaIps = [[('ip1', 0), ('ip2', 0), ('ip3', 0)], [('ip2', 0)]] res = 0
     ipsVerificados = []
     aux = 0
-    aux2 = listaIps[0][0][1]
+    aux2 = listaIps[0][1]
 
     for array in listaIps:
          for tpl in array:

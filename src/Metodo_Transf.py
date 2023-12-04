@@ -114,7 +114,6 @@ def pedir_file(file, filename, ip, peso, port, blocos, lockFile, socketTCP):
             blocoUpd = []
         else:
             print("Não recebi o bloco", i)
-
             blocos_em_falta.append(i)
         
         socketUDP.close()
@@ -131,7 +130,8 @@ def transf_file(fileInfo, caminho_pasta, fileName, socketTCP, port):
     listaNodes = fileInfo[1]
     listaNodes = ordena_por_nodes(listaNodes)
     listaIpsAux = copy.deepcopy(listaNodes)
-
+    print(listaNodes)
+    
     numBlocos = int(fileInfo[0])
     ipsIndv = int(fileInfo[2])
     
