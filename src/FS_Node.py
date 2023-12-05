@@ -14,6 +14,8 @@ CHECK_SUM = 2
 TamanhoBloco = MTU - (ID_SIZE + CHECK_SUM)
 udpAtivo = True
 
+blocos_recebidos = {}
+
 # Método que desliga a socket udp de um node que foi desconectado 
 def set_udp_false():
     global udpAtivo
@@ -87,7 +89,7 @@ def tracker_protocol():
                 print("O ficheiro que está a tentar transferir não existe")
             else:
                 fileInfo = ast.literal_eval(fileInfo_str)
-                transf_file(fileInfo, caminho_pasta,  nomeFicheiro, socketTCP, port)
+                transf_file(fileInfo, caminho_pasta,  nomeFicheiro, blocos_recebidos, socketTCP, port)
                 mensagemUpdate = f"updfin/{nomeFicheiro}\n"
                 print("enviei fim")
                 socketTCP.send(mensagemUpdate.encode())
@@ -119,7 +121,10 @@ def transfer_protocol():
             else:
                 fileName, numBloco = infoFile.split("|")
                 #print(numBloco)
-                env_File(caminho_pasta, fileName, int(numBloco), socketUDP, addr)
+                if fileName in blocos_recebidos:
+                    env_FileIncl(blocos_recebidos, fileName, int(numBloco), socketUDP, addr)
+                else:
+                    env_FileCmpl(caminho_pasta, fileName, int(numBloco), socketUDP, addr)
             ready = False
    
 udp_thread = threading.Thread(target = transfer_protocol)

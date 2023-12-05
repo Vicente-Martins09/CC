@@ -2,22 +2,25 @@ import copy
 
 # Método que compara os nodes todos que têm blocos do ficheiro pretendido 
 # e verifica se têm todos a mesma pontuação ou se existe algum node com prioridade
-def verifica_existe_prioridade(listaIps, ipsIndv):  # listaIps = [[('ip1', 4), ('ip2', 7), ('ip3', -3)], [('ip2', 7)]] res = 1  listaIps = [[('ip1', 0), ('ip2', 0), ('ip3', 0)], [('ip2', 0)]] res = 0
-    ipsVerificados = []
+def verifica_existe_prioridade(listaIps, ipsIndv):
     aux = 0
-    aux2 = listaIps[0][1]
+    for lista, bloco in listaIps:
+        ipsVerificados = set() 
+        aux2 = lista[0][1]
 
-    for array in listaIps:
-         for tpl in array:
-            if aux > ipsIndv: 
-               return 0 
+        if aux > ipsIndv:
+            return 0
 
-            if ipsVerificados.count(tpl) == 0:
-               aux += 1
-               if tpl[1] != aux2:
-                  return 1
-               else:
-                  ipsVerificados.append(tpl)
+        for tpl in lista:
+            if aux >= ipsIndv:
+                return 0
+
+            if tpl not in ipsVerificados:
+                aux += 1
+                if tpl[1] != aux2:
+                    return 1
+                else:
+                    ipsVerificados.add(tpl)
 
     return 0
 
