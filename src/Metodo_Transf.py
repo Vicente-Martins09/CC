@@ -41,7 +41,7 @@ def pedir_file(filename, hostname, peso, port, blocos, blocos_recebidos, socketT
     timeout = 10
 
     for i in blocos:
-        time.sleep(4)
+        #time.sleep(4)
         ping = 1
         socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         socketUDP.settimeout(timeout)
@@ -129,7 +129,6 @@ def escreve_file(file, fileName, blocos_recebidos):
         file.write(data[1])
 
     blocos_recebidos.pop(fileName, None)
-    #print(blocos_recebidos)
 
 # Método que o Node usa para transferir um ficheiro
 # No caso de só um node ter um ficheiro é pedido diretamente a esse node todos os blocos do ficheiro
