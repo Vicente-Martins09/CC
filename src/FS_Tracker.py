@@ -32,7 +32,13 @@ def handle_node(node_socket):
     buffer = b''
     while trackerAtivo:    
         data = node_socket.recv(1024)
-        # print(data)
+        if not data:
+            print("Cona 2 bazou")
+            relembrar_nota(hostname)
+            remover_info_node(hostname)
+            node_socket.close()
+            break
+        print(data)
         buffer += data
         messages = buffer.split(b'\n') 
         buffer = messages.pop()

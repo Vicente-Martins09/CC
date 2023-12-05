@@ -1,7 +1,7 @@
 import threading
 import select
 import socket
-import time
+import trace
 import sys
 import ast
 import os
@@ -70,7 +70,6 @@ def tracker_protocol():
     print("Escreva 'comandos' em caso de dúvida")
     
     while True:
-        
         user_input = input("Selecione um comando: ")
         comando = user_input.strip().lower().split(' ')
         
@@ -107,6 +106,7 @@ def transfer_protocol():
     socketUDP.bind(('0.0.0.0', 9090)) 
     
     while udpAtivo:
+        #print(udpAtivo)
         ready, _, _ = select.select([socketUDP], [], [], 1.0)
         
         if ready:
@@ -131,6 +131,3 @@ udp_thread = threading.Thread(target = transfer_protocol)
 udp_thread.start()
 tracker_thread = threading.Thread(target = tracker_protocol)
 tracker_thread.start()
-
-udp_thread.join()
-tracker_thread.join()
