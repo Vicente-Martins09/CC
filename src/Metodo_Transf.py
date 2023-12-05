@@ -1,6 +1,5 @@
 import threading
 import socket
-import copy
 import time
 import ast
 import os
@@ -42,7 +41,7 @@ def pedir_file(filename, hostname, peso, port, blocos, blocos_recebidos, socketT
     timeout = 10
 
     for i in blocos:
-        #time.sleep(3)
+        time.sleep(4)
         ping = 1
         socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         socketUDP.settimeout(timeout)
@@ -99,7 +98,7 @@ def pedir_file(filename, hostname, peso, port, blocos, blocos_recebidos, socketT
 
                     if checksumRecebido == checksum_dataRecebida:
                         peso += 1 
-                        print("recebi bloco", i)
+                        print("Block", i, "recieved from:", hostname)
                         break
                     else: 
                         peso -= 1
@@ -117,7 +116,7 @@ def pedir_file(filename, hostname, peso, port, blocos, blocos_recebidos, socketT
             #print("enviei bloc", mensagemUpdateBlocos)
             blocoUpd = []
         else:
-            print("Não recebi o bloco", i)
+            print("Block", i, "not recieved from:", hostname)
             blocos_em_falta.append(i)
         
         socketUDP.close()
@@ -139,11 +138,9 @@ def escreve_file(file, fileName, blocos_recebidos):
 def transf_file(fileInfo, caminho_pasta, fileName, blocos_recebidos, socketTCP, port):
     global file_size
     global blocos_em_falta
-    lockFile = threading.Lock()
 
     listaNodes = fileInfo[1]
     listaNodes = ordena_por_nodes(listaNodes)
-    listaIpsAux = copy.deepcopy(listaNodes)
     print(listaNodes)
 
     numBlocos = int(fileInfo[0])
@@ -174,7 +171,7 @@ def transf_file(fileInfo, caminho_pasta, fileName, blocos_recebidos, socketTCP, 
             thread.join()    
         
     elif verifica_existe_prioridade(listaNodes, ipsIndv) != 0 and ipsIndv > 1:
-        MaxBlocos = 5
+        MaxBlocos = 8
         blocos, blocos_por_pedir = escolhe_nodes(listaNodes, ipsIndv, MaxBlocos)
         listaFinal = lista_pedir_blocos(blocos)
         #print(listaFinal, "elif != 0")
@@ -202,6 +199,14 @@ def transf_file(fileInfo, caminho_pasta, fileName, blocos_recebidos, socketTCP, 
 
     while faltamBlocos:
         print("A pedir novamente os blocos:", blocos_em_falta)
+        mensagemListaUpdated = f"updlst/{fileName}\n" 
+        socketTCP.send(mensagemListaUpdated.encode())
+        listaIpsUpd_str = socketTCP.recv(1024).decode() 
+        if listaIpsUpd_str == "None":
+            print("O ficheiro que está a tentar transferir não existe")
+        else:
+            listaIpsUpd = ast.literal_eval(listaIpsUpd_str)
+        listaIpsAux = ordena_por_nodes(listaIpsUpd)
         listaBlocosEmFalta = filtraLista(listaIpsAux,blocos_em_falta)
         blocos, err = escolhe_nodes(listaBlocosEmFalta, ipsIndv, 5)
         listaFinal = lista_pedir_blocos(blocos)
@@ -237,7 +242,7 @@ def calcula_checksum(data):
 
 # Método que o Node usa para enviar um ficheiro caso tenho o ficheiro completo na sua pasta
 def env_FileCmpl(caminho_pasta, fileName, numBloco, socketUDP, addr):  
-    print("enviei do completo bloco", numBloco)   
+    #print("enviei do completo bloco", numBloco)   
     caminhoFile = os.path.join(caminho_pasta, fileName)
       
     with open(caminhoFile, "rb") as file:
@@ -261,7 +266,7 @@ def env_FileCmpl(caminho_pasta, fileName, numBloco, socketUDP, addr):
 
 # Método que o Node usa para enviar um ficheiro caso ainda esteja a trasnferir blocos 
 def env_FileIncl(blocos_recebidos, fileName, numBloco, socketUDP, addr):
-    print("enviei do incompleto bloco", numBloco)
+    #print("enviei do incompleto bloco", numBloco)
     dataEnviar = b''
     for numero, data in blocos_recebidos[fileName]:
         if numero == numBloco:

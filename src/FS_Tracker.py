@@ -33,7 +33,6 @@ def handle_node(node_socket):
     while trackerAtivo:    
         data = node_socket.recv(1024)
         if not data:
-            print("Cona 2 bazou")
             relembrar_nota(hostname)
             remover_info_node(hostname)
             node_socket.close()
@@ -79,9 +78,9 @@ def handle_node(node_socket):
                     
                     if localizacao is not None:
                         numBlocos = int(localizacao[0])
-                        ipsIndv = len(localizacao[1]) + len(localizacao[2])  # numero máximo de blocos que se pode transferir
-                        ips = blocos_por_node(localizacao[1], localizacao[2], numBlocos)
-                        node_info = (numBlocos, ips, ipsIndv)
+                        hostsIndv = len(localizacao[1]) + len(localizacao[2])  # numero máximo de blocos que se pode transferir
+                        hosts = blocos_por_node(localizacao[1], localizacao[2], numBlocos)
+                        node_info = (numBlocos, hosts, hostsIndv)
                         response = f"{node_info}"
                     else:
                         response = "None"
@@ -89,7 +88,24 @@ def handle_node(node_socket):
                     node_socket.send(response.encode())
                 else:
                     print("Ocorreu um erro a pedir o file")
+
+            elif key == "updlst":
+                if len(format) == 2:
+                    nomeFile = format[1]
+                    localizacao = procurar_file(nomeFile)
+                    print(localizacao, "localizacao")
                     
+                    
+                    if localizacao is not None:
+                        numBlocos = int(localizacao[0])
+                        hosts = blocos_por_node(localizacao[1], localizacao[2], numBlocos)
+                        response = f"{hosts}"
+                        print(response)
+                    else:
+                        response = "None"
+                    
+                    node_socket.send(response.encode())
+
             elif key == "updblc":
                 if len(format) == 5:
                     nomeFile = format[1]

@@ -1,7 +1,6 @@
 import threading
 import select
 import socket
-import trace
 import sys
 import ast
 import os
