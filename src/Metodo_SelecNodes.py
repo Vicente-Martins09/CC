@@ -29,7 +29,7 @@ def verifica_existe_prioridade(listaIps, ipsIndv):
 def ordena_por_nodes(listaIps):
    tam = len(listaIps)
    blocos_nodes = []
-   aux = 1
+   aux = 0
 
    while (len(blocos_nodes) != tam):
       i = 0
@@ -38,7 +38,6 @@ def ordena_por_nodes(listaIps):
             blocos_nodes.append((array, i))
          i += 1
       aux += 1
-   
    return blocos_nodes
 
 # Algoritmo de round robin por pesos que escolhe dentro de uma lista de nodes o que têm o maior peso para ser pedido o bloco

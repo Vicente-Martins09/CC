@@ -1,5 +1,6 @@
 import threading
 import socket
+import pickle
 
 from Struct_FileNodes import *
 
@@ -7,9 +8,13 @@ from Struct_FileNodes import *
 node_threads = {}
 
 # Configuração do servidor
-# host = '127.0.0.1'
-host = '10.4.4.1'  # Endereço IP do servidor
+domain_prefix = socket.gethostname()
+domain_suffix = ".CC2023"
+domain = f"{domain_prefix}{domain_suffix}"
+host = socket.gethostbyname(domain)  # Endereço IP do servidor
 port = 9090       # Porta que o servidor irá ouvir
+
+print(f"{domain} está escutando em {host}: porta {port}")
 
 # Cria um socket do tipo TCP
 socketTCP = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -21,8 +26,6 @@ socketTCP.bind((host, port))
 socketTCP.listen()
 
 x = 0
-
-print(f"Servidor escutando em {host}: porta {port}")
 
 # Método que interage diretamente com o Node
 def handle_node(node_socket):
@@ -81,11 +84,14 @@ def handle_node(node_socket):
                         hostsIndv = len(localizacao[1]) + len(localizacao[2])  # numero máximo de blocos que se pode transferir
                         hosts = blocos_por_node(localizacao[1], localizacao[2], numBlocos)
                         node_info = (numBlocos, hosts, hostsIndv)
-                        response = f"{node_info}"
+                        response = pickle.dumps(node_info)
                     else:
                         response = "None"
+                        response = pickle.dumps(response)
 
-                    node_socket.send(response.encode())
+                    node_socket.send(response)
+                    end_message = "END_TRANSMISSION"
+                    node_socket.send(end_message.encode())
                 else:
                     print("Ocorreu um erro a pedir o file")
 
@@ -99,12 +105,15 @@ def handle_node(node_socket):
                     if localizacao is not None:
                         numBlocos = int(localizacao[0])
                         hosts = blocos_por_node(localizacao[1], localizacao[2], numBlocos)
-                        response = f"{hosts}"
+                        response = pickle.dumps(hosts)
                         print(response)
                     else:
                         response = "None"
+                        response = pickle.dumps(response)
                     
-                    node_socket.send(response.encode())
+                    node_socket.send(response)
+                    end_message = "END_TRANSMISSION"
+                    node_socket.send(end_message.encode())
 
             elif key == "updblc":
                 if len(format) == 5:
@@ -130,7 +139,6 @@ while True:
     node_thread = threading.Thread(target = handle_node, args = (node_socket,))
     node_thread.start()
     
-    # nodeIP = x
     node_threads[x] = node_thread
     
 # Fecha o socket do servidor

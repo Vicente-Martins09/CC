@@ -1,8 +1,8 @@
 import threading
 import select
 import socket
+import pickle
 import sys
-import ast
 import os
 
 from Metodo_Transf import *
@@ -15,16 +15,23 @@ udpAtivo = True
 
 blocos_recebidos = {}
 
+# Método utilizado no caso de um node já ter uma parte do ficheiro que pretende transferir
+# desta forma apenas irá pedir os blocos que lhe faltam
+def blocos_para_pedir(nomeFile, numBlocos):
+    blocos = {num for num, _ in blocos_recebidos.get(nomeFile, [])}
+    blocos_por_pedir = [num for num in range(1, numBlocos + 1) if num not in blocos]
+    return blocos_por_pedir
+
 # Método que desliga a socket udp de um node que foi desconectado 
 def set_udp_false():
     global udpAtivo
     udpAtivo = False
 
+# Configuração do cliente
 if len(sys.argv) != 4:
     print("Uso: python cliente.py <IP do host> <Número da Porta> <Pasta com os ficheiros>")
     sys.exit(1)
 
-# Configuração do cliente
 host = sys.argv[1]  # Endereço IP do servidor
 port = int(sys.argv[2])  # Porta que o servidor está ouvindo
 
@@ -82,15 +89,27 @@ def tracker_protocol():
             nomeFicheiro = comando[1]  # Obtém o nome do arquivo
             mensagemGet = f"get/{nomeFicheiro}\n"
             socketTCP.send(mensagemGet.encode())
-            fileInfo_str = socketTCP.recv(1024).decode() # (nºblocos, ips)
-            if fileInfo_str == "None":
+            fileInfo_bytes = b""
+            while True:
+                chunk = socketTCP.recv(1024)
+                if chunk == b'END_TRANSMISSION':
+                    break
+                fileInfo_bytes += chunk
+
+            fileInfo = pickle.loads(fileInfo_bytes)
+            if fileInfo == "None":
                 print("O ficheiro que está a tentar transferir não existe")
             else:
-                fileInfo = ast.literal_eval(fileInfo_str)
-                transf_file(fileInfo, caminho_pasta,  nomeFicheiro, blocos_recebidos, socketTCP, port)
-                mensagemUpdate = f"updfin/{nomeFicheiro}\n"
-                print("enviei fim")
-                socketTCP.send(mensagemUpdate.encode())
+                blocos_por_pedir = []
+                if nomeFicheiro in blocos_recebidos:
+                    numBlocos = int(fileInfo[0])
+                    blocos_por_pedir = blocos_para_pedir(nomeFicheiro, numBlocos)
+                sucesso = transf_file(fileInfo, caminho_pasta,  nomeFicheiro, blocos_recebidos, blocos_por_pedir, socketTCP, port)
+                if sucesso == 0:
+                    mensagemUpdate = f"updfin/{nomeFicheiro}\n"
+                    socketTCP.send(mensagemUpdate.encode())
+                else: 
+                    print("O ficheiro não foi totalmente transferido, tente novamente.")
        
         elif comando[0] == "comandos":
             print("\tquit: Desligar a ligação ao servidor.")
