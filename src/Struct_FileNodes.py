@@ -70,12 +70,20 @@ def update_info_file(nomeFile, nodeHostName, numBlocos, hostAtualizar, peso):
                     print_listaFiles()
                     break
         
-# Método que remove um Node da memória do Tracker quando o Node se desconecta    
+# Método que remove um Node da memória do Tracker quando o Node se desconecta  
+# no caso de ser o único node com o ficheiro ou com blocos do mesmo este é também removido da memória  
 def remover_info_node(nodeHostName):
     removido = 0
+    removerFicheiro = []
     for ficheiro, node_info in ficheiroDoNodo.items():
         node_info[1] = [(node1, _) for node1, _ in node_info[1] if nodeHostName != node1]
         node_info[2] = [((node2, _), blocos) for (node2, _), blocos in node_info[2] if nodeHostName != node2]
+
+        if not node_info[1] and not node_info[2]:
+            removerFicheiro.append(ficheiro)
+
+    for ficheiro in removerFicheiro:
+        del ficheiroDoNodo[ficheiro]
         
     print(f"Informação do {nodeHostName} removida")
     # print("remover")
