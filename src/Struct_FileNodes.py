@@ -24,8 +24,7 @@ def guarda_Localizacao(data, nodeHostName):
         if ficheiro in ficheiroDoNodo:
                 ficheiroDoNodo[ficheiro][1].append((nodeHostName, peso))
         else:
-            ficheiroDoNodo[ficheiro] = [numBlocks, [(nodeHostName, peso)], []]
-    # print("guarda")        
+            ficheiroDoNodo[ficheiro] = [numBlocks, [(nodeHostName, peso)], []] 
     print_listaFiles()
 
 # Método utilizado para atualizar o valor do peso cada vez que a função update_file_info é chamada
@@ -58,14 +57,12 @@ def update_info_file(nomeFile, nodeHostName, numBlocos, hostAtualizar, peso):
                         if nodeHostName == node[0]:
                             for i in numBlocos:
                                 blocos[i - 1] = 1
-                            #print(blocos)
                             print_listaFiles()
                             break
                 else:
                     blocos = [0] * int(node_info[0])
                     for i in numBlocos:
                         blocos[i - 1] = 1
-                    #print(blocos)
                     ficheiroDoNodo[ficheiro][2].append(((nodeHostName, 0), blocos)) 
                     print_listaFiles()
                     break
@@ -86,14 +83,12 @@ def remover_info_node(nodeHostName):
         del ficheiroDoNodo[ficheiro]
         
     print(f"Informação do {nodeHostName} removida")
-    # print("remover")
     print_listaFiles()
     
 # Método que verifica se o file que estamos a tentar transferir existe e se sim devolve a informação que a ele está vinculada
 def procurar_file(nomeFile):
     for ficheiro, node_info in ficheiroDoNodo.items():
         if ficheiro == nomeFile:
-            # print("procura")
             if len(node_info[1]) > 0 or len(node_info[2]) > 0:
                 print_listaFiles()
                 return node_info

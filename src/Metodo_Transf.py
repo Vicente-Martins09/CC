@@ -20,7 +20,6 @@ def guarda_bloco_recebido(fileName, numBlocoRec, conteudoFile, blocos_recebidos)
         blocos_recebidos[fileName].append((numBlocoRec, conteudoFile))
     else:
         blocos_recebidos[fileName] = [(numBlocoRec, conteudoFile)]
-    #print(blocos_recebidos)
 
 # Método que pede e recebe os blocos aos nodes
 # Começa por determinar o tempo de espera que irá ser utilizado a cada pedido
@@ -33,9 +32,7 @@ def guarda_bloco_recebido(fileName, numBlocoRec, conteudoFile, blocos_recebidos)
 def pedir_file(filename, hostname, peso, port, blocos, blocos_recebidos, socketTCP):
     global blocos_em_falta
 
-    #print(hostname)
     ip = socket.gethostbyname(hostname)
-    #print(ip)
     blocoUpd = []
     timeout = 10
 
@@ -46,13 +43,13 @@ def pedir_file(filename, hostname, peso, port, blocos, blocos_recebidos, socketT
         socketUDP.settimeout(timeout)
         ti = time.time()
         request = "Ping"
-        print("sented request", ip)
+        print("sented request", hostname)
         socketUDP.sendto(request.encode(), (ip, port))
         while ping <= 2:
             try:
                 data, addr = socketUDP.recvfrom(1024)
             except socket.timeout:
-                print("Timeout - retrying - ping...", ip)
+                print("Timeout - retrying - ping...", hostname)
                 socketUDP.sendto(request.encode(), (ip, port))
                 peso -= 2
                 ping += 1
@@ -67,11 +64,10 @@ def pedir_file(filename, hostname, peso, port, blocos, blocos_recebidos, socketT
         timeout = td
         if ping > 1: timeout = (timeout / 1000) * 1.5
         
-        print(timeout, "tempo espera", ip)
+        print(timeout, "tempo espera", hostname)
 
         pedido = 1
         pedeBloco = f"{filename}|{i}"
-        #print(ip, pedeBloco)
         socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         socketUDP.settimeout(timeout)
         socketUDP.sendto(pedeBloco.encode(), (ip, port))
@@ -81,7 +77,7 @@ def pedir_file(filename, hostname, peso, port, blocos, blocos_recebidos, socketT
             try:
                 data, addr = socketUDP.recvfrom(MTU)
             except socket.timeout:
-                print("Timeout - retrying...", ip)
+                print("Timeout - retrying...", hostname)
                 socketUDP.settimeout(timeout)
                 socketUDP.sendto(pedeBloco.encode(), (ip, port))
                 peso -= 2
@@ -111,7 +107,6 @@ def pedir_file(filename, hostname, peso, port, blocos, blocos_recebidos, socketT
 
             mensagemUpdateBlocos = f"updblc/{filename}/{blocoUpd}/{peso}/{hostname}\n" 
             socketTCP.send(mensagemUpdateBlocos.encode())
-            #print("enviei bloc", mensagemUpdateBlocos)
             blocoUpd = []
         else:
             print("Block", i, "not recieved from:", hostname)
@@ -137,7 +132,6 @@ def escreve_file(file, fileName, blocos_recebidos):
         file.write(data[1])
 
     blocos_recebidos.pop(fileName, None)
-    #print(blocos_recebidos)
 
 # Método que o Node usa para transferir um ficheiro
 # No caso de só um node ter um ficheiro é pedido diretamente a esse node todos os blocos do ficheiro
@@ -259,8 +253,7 @@ def calcula_checksum(data):
     return checksum   
 
 # Método que o Node usa para enviar um ficheiro caso tenho o ficheiro completo na sua pasta
-def env_FileCmpl(caminho_pasta, fileName, numBloco, socketUDP, addr):  
-    #print("enviei do completo bloco", numBloco)   
+def env_FileCmpl(caminho_pasta, fileName, numBloco, socketUDP, addr): 
     caminhoFile = os.path.join(caminho_pasta, fileName)
       
     with open(caminhoFile, "rb") as file:
@@ -284,7 +277,6 @@ def env_FileCmpl(caminho_pasta, fileName, numBloco, socketUDP, addr):
 
 # Método que o Node usa para enviar um ficheiro caso ainda esteja a trasnferir blocos 
 def env_FileIncl(blocos_recebidos, fileName, numBloco, socketUDP, addr):
-    #print("enviei do incompleto bloco", numBloco)
     dataEnviar = b''
     for numero, data in blocos_recebidos[fileName]:
         if numero == numBloco:

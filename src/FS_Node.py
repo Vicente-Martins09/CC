@@ -124,21 +124,16 @@ def transfer_protocol():
     socketUDP.bind(('0.0.0.0', 9090)) 
     
     while udpAtivo:
-        #print(udpAtivo)
         ready, _, _ = select.select([socketUDP], [], [], 1.0)
         
         if ready:
             data, addr = socketUDP.recvfrom(1024)
             infoFile = data.decode()
-            #print(infoFile)
-            #print(addr)
             if infoFile == "Ping":
                 reply = "Pong"
                 socketUDP.sendto(reply.encode(), addr)
-                #print("enviei", reply)
             else:
                 fileName, numBloco = infoFile.split("|")
-                #print(numBloco)
                 if fileName in blocos_recebidos:
                     env_FileIncl(blocos_recebidos, fileName, int(numBloco), socketUDP, addr)
                 else:

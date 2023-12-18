@@ -40,19 +40,14 @@ def handle_node(node_socket):
             remover_info_node(hostname)
             node_socket.close()
             break
-        print(data)
         buffer += data
         messages = buffer.split(b'\n') 
         buffer = messages.pop()
-        #print(messages, "messages")
 
         for message in messages:
-            #print(message)
             message_str = message.decode()
-            #print(message_str)
             format = message_str.split("/")
             key = format[0]
-            print(key, "chave")
         
             if key == "quit":
                 print("Node desconectado")
@@ -77,7 +72,7 @@ def handle_node(node_socket):
                 if len(format) == 2:
                     nomeFile = format[1]
                     localizacao = procurar_file(nomeFile)
-                    print(localizacao, "localizacao")
+                    #print(localizacao, "localizacao")
                     
                     if localizacao is not None:
                         numBlocos = int(localizacao[0])
@@ -99,14 +94,12 @@ def handle_node(node_socket):
                 if len(format) == 2:
                     nomeFile = format[1]
                     localizacao = procurar_file(nomeFile)
-                    print(localizacao, "localizacao")
                     
                     
                     if localizacao is not None:
                         numBlocos = int(localizacao[0])
                         hosts = blocos_por_node(localizacao[1], localizacao[2], numBlocos)
                         response = pickle.dumps(hosts)
-                        print(response)
                     else:
                         response = "None"
                         response = pickle.dumps(response)
@@ -121,7 +114,6 @@ def handle_node(node_socket):
                     num = format[2]
                     peso = int(format[3])
                     hostnamePeso = format[4] 
-                    print(peso, hostnamePeso)
                     numBlocos = [int(x) for x in num.strip("[]").split(",")]
                     update_info_file(nomeFile, hostname, numBlocos, hostnamePeso, peso)
                     
